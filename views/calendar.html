@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html class="no-js" lang="en">
   <head>
@@ -5,16 +6,16 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Quilt Patch</title>
-    <link rel="stylesheet" href="/css/app.css">
-    <link rel="stylesheet" href="/js/vendor/jqueryui/jquery-ui.min.css">
-    <link rel="stylesheet" href="/js/vendor/fullcalendar/fullcalendar.min.css">
-    <script src="/js/vendor/jquery/jquery-3.2.1.min.js"></script>
-    <script src="/js/vendor/jqueryui/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/app.css">
+    <link rel="stylesheet" href="/assets/js/vendor/jqueryui/jquery-ui.min.css">
+    <link rel="stylesheet" href="/assets/js/vendor/fullcalendar/fullcalendar.min.css">
+    <script src="assets/js/vendor/jquery/jquery-3.2.1.min.js"></script>
+    <script src="assets/js/vendor/jqueryui/jquery-ui.min.js"></script>
   </head>
   <body>
     <header class="row align-middle portfolio-hero-header" data-equalizer="header">
       <div class="show-for-medium columns text-center" data-equalizer-watch="header">
-        <img src="/images/QPLogo.gif" alt="The Quilt Patch">
+        <img src="assets/img/QPLogo.gif" alt="The Quilt Patch">
       </div>
       <div class="small-12 medium-6 columns text-center" data-equalizer-watch="header">
         <h1 class="portfolio-hero-header-h1">The Quilt Patch</h1>
@@ -25,9 +26,9 @@
         </ul>
       </div>
       <div class="show-for-medium columns text-center" data-equalizer-watch="header">
-        <img src="/images/BHGQuiltSampler.png" alt="Better Homes And Gardens Quilt Sampler">
+        <img src="assets/img/BHGQuiltSampler.png" alt="Better Homes And Gardens Quilt Sampler">
         <br><br>
-        <img src="/images/bernina-logo-sm.png" alt="Bernina">
+        <img src="assets/img/bernina-logo-sm.png" alt="Bernina">
       </div>
     </header>
 
@@ -49,15 +50,63 @@
       </div>
 
       <div class="small-9 medium-10 columns content-copy" data-equalizer-watch="content">
-
-        <% content %>
+        <div class="row column">
+          <div class="callout">
+            <h3>Events Calendar</h3>
+            <div class="calendar-box">
+              <div id="calendar"></div>
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          $(document).ready(function() {
+            $('#calendar').fullCalendar({
+              // put your options and callbacks here
+              editable: false,
+              timezone: 'America/New_York',
+              fixedWeekCount: false,
+              aspectRatio: 1.605,
+              height: 600,
+              weekNumbersWithinDays: true,
+              theme: true,
+              themeButtonIcons:
+              {
+                prev: 'circle-triangle-w',
+                next: 'circle-triangle-e',
+                prevYear: 'seek-prev',
+                nextYear: 'seek-next'
+              },
+              header:
+              {
+                left: 'title',
+                center: '',
+                right: 'today prevYear,prev,next,nextYear'
+              },
+              businessHours: [
+                {
+                  dow: [ 1, 2, 3, 4, 5, 6 ],
+                  start: '10:00',
+                  end: '17:00'
+                },
+                {
+                  dow: [ 0 ],
+                  start: '12:00',
+                  end: '17:00'
+                }
+              ]
+            })
+        
+          });
+        </script>
+        
 
       </div>
     </div>
 
     <footer class="social-footer">
       <div class="social-footer-left">
-        <a href="/"><img src="/images/QPLogo-sm.png" alt="The Quilt Patch"></a>
+        <a href="/"><img src="assets/img/QPLogo-sm.png" alt="The Quilt Patch"></a>
       </div>
       <div class="social-footer-icons">
         <ul class="menu simple">
@@ -67,9 +116,9 @@
       </div>
     </footer>
 
-    <script src="/js/app.js"></script>
+    <script src="assets/js/app.js"></script>
     <script src="https://use.fontawesome.com/bbc3509751.js"></script>
-    <script src="/js/vendor/fullcalendar/moment.min.js"></script>
-    <script src="/js/vendor/fullcalendar/fullcalendar.min.js"></script>
+    <script src="assets/js/vendor/fullcalendar/moment.min.js"></script>
+    <script src="assets/js/vendor/fullcalendar/fullcalendar.min.js"></script>
   </body>
 </html>

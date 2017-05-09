@@ -1,148 +1,126 @@
+        <div class="row" data-equalizer="news">
+          <div class="small-12 medium-6 large-8 columns">
+            <div class="callout" data-equalizer-watch="news">
+              <h4>News Highlights</h4>
 
-<!--
-    Credit goes to the Ruby on Rails team for this page
-    has been heavily based on the default Rails page that is
-    built with a scaffolded application.
+              <div class="news-highlights">
 
-    Thanks a lot to them for their work.
+                <div class="row">
+                  <div class="small-12 columns article-row">
+                    <h5>Project Linus</h5>
+                    <span class="byline">Posted: 02 May 2017 ET</span><br>
+                    <p>The Quilt Patch is committed to making quilts for children who need a security blanket for any reason.<br>
+                    <a href="/news/46">Click here for more information.</a></p>
+                  </div>
+                </div>
 
-    See Ruby on Rails if you want a kickass framework in Ruby:
-    http://www.rubyonrails.org/
--->
+                <div class="row">
+                  <div class="small-12 columns article-row">
+                    <h5>Market Party</h5>
+                    <span class="byline">Posted: 02 May 2017 ET</span><br>
+                    <p>Mark your calendars - Sunday, July 9th.<br>
+                    <a href="/news/45">Click here for more information.</a></p>
+                  </div>
+                </div>
+              </div>
 
-<div id="page">
-      <div id="sidebar">
-        <ul id="sidebar-items">
-          <li>
-            <h3>Join the community</h3>
-            <ul class="links">
-
-              <li><a href="http://perldancer.org/">PerlDancer</a></li>
-              <li><a href="http://twitter.com/PerlDancer/">Official Twitter</a></li>
-              <li><a href="https://github.com/PerlDancer/Dancer2/">GitHub Community</a></li>
-            </ul>
-          </li>
-
-          <li>
-            <h3>Browse the documentation</h3>
-
-            <ul class="links">
-              <li><a
-              href="https://metacpan.org/pod/Dancer2::Manual">Introduction</a></li>
-              <li><a href="https://metacpan.org/pod/Dancer2::Cookbook">Cookbook</a></li>
-              <li><a
-              href="https://metacpan.org/pod/Dancer2::Tutorial"
-              title="a tutorial to build a small blog engine with Dancer">Tutorial</a></li>
-            </ul>
-          </li>
-
-          <li>
-            <h3>Your application's environment</h3>
-
-            <ul>
-                <li>Location: <span class="filepath">/home/jlamey/src/dancer_projects/QuiltPatch/QP</span></li>
-                <li>Template engine: <span class="app-info"><% settings.template %></span></li>
-                <li>Logger: <span class="app-info"><% settings.logger %></span></li>
-                <li>Environment: <span class="app-info"><% settings.environment %></span></li>
-            </ul>
-
-          </li>
-        </ul>
-
-      </div>
-
-      <div id="content">
-        <div id="header">
-          <h1>Perl is dancing</h1>
-          <h2>You&rsquo;ve joined the dance floor!</h2>
-        </div>
-
-        <div id="getting-started">
-          <h1>Getting started</h1>
-          <h2>Here&rsquo;s how to get dancing:</h2>
-
-          <h3><a href="#" id="about_env_link">About your application's environment</a></h3>
-
-          <div id="about-content" style="display: none;">
-            <table>
-                <tbody>
-                <tr>
-                    <td>Perl version</td>
-                    <td><span class="app-info"><% perl_version %></span></td>
-                </tr>
-                <tr>
-                    <td>Dancer2 version</td>
-                    <td><span class="app-info"><% dancer_version %></span></td>
-                </tr>
-                <tr>
-                    <td>Backend</td>
-                    <td><span class="app-info"><% settings.apphandler %></span></td>
-                </tr>
-                <tr>
-                    <td>Appdir</td>
-                    <td><span class="filepath">/home/jlamey/src/dancer_projects/QuiltPatch/QP</span></td>
-                </tr>
-                <tr>
-                    <td>Template engine</td>
-                    <td><span class="app-info"><% settings.template %></span></td>
-                </tr>
-                <tr>
-                    <td>Logger engine</td>
-                    <td><span class="app-info"><% settings.logger %></span></td>
-                </tr>
-                <tr>
-                    <td>Running environment</td>
-                    <td><span class="app-info"><% settings.environment %></span></td>
-                </tr>
-                </tbody>
-            </table>
+            </div>
           </div>
+          <div class="small-12 medium-6 large-4 columns">
+            <div class="callout primary" data-equalizer-watch="news">
+              <h4>Important Dates</h4>
 
-    <script type="text/javascript">
-    $('#about_env_link').click(function() {
-        $('#about-content').slideToggle('fast', function() {
-            // ok
-        });
-        return false;
-    });
-    </script>
+              <div class="events-group">
+                <h6>Upcoming Events</h6>
 
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    Heavenly Sewing Chairs Sale
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    May 01 - May 21<br>10:00 AM - 05:00 PM
+                  </div>
+                </div>
 
-          <ol>
-            <li>
-              <h2>Tune your application</h2>
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    Mother's Day Sale
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    May 11 - May 15<br>10:00 AM - 05:00 PM
+                  </div>
+                </div>
 
-              <p>
-              Your application is configured via a global configuration file,
-              <span class="filepath">config.yml</span> and an "environment" configuration file,
-              <span class="filepath">environments/development.yml</span>. Edit those files if you
-              want to change the settings of your application.
-              </p>
-            </li>
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    Our Annual Market Party
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    July 09<br>12:00 PM - 05:00 PM
+                  </div>
+                </div>
+              </div>
 
-            <li>
-              <h2>Add your own routes</h2>
+              <div class="events-group">
+                <h6>Closings</h6>
 
-              <p>
-              The default route that displays this page can be removed,
-              it's just here to help you get started. The template used to
-              generate this content is located in
-              <span class="filepath">views/index.tt</span>.
-              You can add some routes to <span class="filepath">lib/QP.pm</span>.
-              </p>
-            </li>
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    Mother's Day
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    May 14, 2017
+                  </div>
+                </div>
 
-            <li>
-              <h2>Enjoy web development again</h2>
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    4th of July
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    July 04, 2017
+                  </div>
+                </div>
 
-              <p>
-              Once you've made your changes, restart your standalone server
-              <span class="filepath">(bin/app.psgi)</span> and you're ready
-              to test your web application.
-              </p>
-            </li>
-
-          </ol>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div class="row">
+          <div class="small-12 medium-5 columns">
+            <div class="row column">
+              <div class="callout">
+                <h4>What's New at the Quilt Patch</h4>
+                <p>Classes and events for the summer have been scheduled and the newsletter has been published. Click here for the <a href="/newsletters/QP-2017-Summer.pdf" target="_blank">Summer 2017 Newsletter</a>. Come in or call to enroll.</p>
+                <p>For information about upcoming sales, Project Linus, and other events, <a href="/qp_news">click here</a> for Quilt Patch News.</p>
+                <h4>Quilt Patch Classes</h4>
+                <p>For a complete list of classes offered by the Quilt Patch or to find the classes offered by your favorite teachers, <a href="/classes">click here</a>.</p>
+              </div>
+            </div>
+            <div class="row column">
+              <div class="index-format callout primary">
+                <h4>About The Quilt Patch</h4>
+                <img src="/images/QPHomePic2.jpg" alt="The Quilt Patch">
+                <p>The Quilt Patch was opened April 24, 1974 by Lu and Joe Hildebrand and subsequently sold to Leslie Pfeifer in 1989. It began in the old square of Fairfax City in Northern Virginia and moved to its current location on Main Street in 1999. Our focus has always been to teach classes in all aspects of quiltmaking from beginners to advanced and believe that knowing basic skills helps everyone produce better quality work. We also provide all of the materials and supplies necessary to make quilts. We stock about 3500 bolts of 100% first quality cotton fabric, both traditional and contemporary, including hundreds of bolts of Batiks. Our walls are covered with quilts showing class projects and pattern/book models and change regularly. We welcome you all to The Quilt Patch and hope to see you soon.</p>
+              </div>
+            </div>
+          </div>
+          <div class="small-12 medium-7 columns">
+            <div class="index-format callout">
+              <h4>Leslie's Letter</h4>
+              <img src="/images/LesliePortrait-145w.jpg" alt="Leslie Pfeifer" title="Leslie Pfeifer">
+              <p>Since the last newsletter we’ve had winter, spring, winter, summer, spring. My allergies don’t know what to react to. How wonderful those daffodils are resilient. How the other growing things in my garden will fare is another question. I remember the days in Holland and at Keukenhof, the enormous park with tulips as far as the eye can see. It was magnificent and the highlight of every spring. Squirrels wage war on the tulip bulbs I plant, but reject the crocus and daffodils which survive and I look forward to them every year.</p>
+
+              <p>Quilts are blossoming as well at the QP. My winter beginners have all made gorgeous first quilts and every class and every customer has something beautiful to share. There is nothing more satisfying than seeing projects come through the door that we have had a hand in helping to create. Keep bringing them in because we love to see them.</p>
+
+              <p>Thanks to everyone who contributed to our collection for the Women’s Shelter. There is always a need and you help to make that difficult transition easier by providing some basic needs for these women and children. We have also started collecting spare change for the Shelter to enable them to purchase some of the things that are needed between collections. There is a jar on the front counter and any amount is appreciated. I will count it out every month and issue them a check each time we reach $100 or more. In an uncertain world, it feels good to know that we can help and make a positive impact. We appreciate your continued compassion and help.</p>
+
+              <p>Our recent Project Linus Days netted 76 quilts, afghans and fleece blankets in about 2 1/2 days. I send a huge THANK YOU to Carol, Margaret and Mollie for their organization and dedication to this amazing output, and to our Quilt Patch Linus Ladies who never let us down. They show up to sew, quilt and finish quilts so that children can have a one of their own while undergoing some difficult times. Most of these will go to Ronald McDonald House and to the Butter y Unit and we have our loyal volunteers to thank for spending their time sewing up some love.</p>
+
+              <p>I hope you will find some interesting classes in this newsletter. There are new ones, some tried and true, but never old ones and of course the basics for brushing up or learning skills to make quilt making easier and more enjoyable. So spend a few hours with us this spring and summer if you can. We look forward to seeing you and your projects and hope that your UFO list gets shorter, but your love for quilting grows ever longer.</p>
+
+              <p>Happy Quilting,</p>
+            </div>
+          </div>
+        </div>
