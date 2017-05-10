@@ -1,0 +1,114 @@
+        <div class="row column">
+          <div class="callout">
+
+            <h3>Events Calendar</h3>
+            <div class="calendar-box">
+
+              <div id="calendar"></div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <div id="eventContent" title="Event Details" style="display:none;">
+          <h4><span id="eventType"></span>: <span id="eventTitle"></span></h4>
+          Start: <span id="startTime"></span><br>
+          End: <span id="endTime"></span><br><br>
+          <p id="eventInfo"></p>
+        </div>
+
+        <script>
+          $(document).ready(function() {
+
+            $( '<link rel="stylesheet" type="text/css" href="/js/vendor/fullcalendar/fullcalendar.css">').appendTo("head");
+            function toTitleCase(str)
+            {
+              return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+            }
+
+            $(window).on("load", function() {
+
+              $('#calendar').fullCalendar({
+                // put your options and callbacks here
+                editable: false,
+                eventLimit: 3,
+                eventLimitClick: 'popover',
+                timezone: 'America/New_York',
+                fixedWeekCount: false,
+                aspectRatio: 1.35,
+                height: 600,
+                theme: true,
+                themeButtonIcons:
+                {
+                  prev: 'circle-triangle-w',
+                  next: 'circle-triangle-e',
+                  prevYear: 'seek-prev',
+                  nextYear: 'seek-next'
+                },
+                header:
+                {
+                  left: 'title',
+                  center: '',
+                  right: 'today prevYear,prev,next,nextYear'
+                },
+                eventSources: [
+                  {
+                    url: '/get_events/closing',
+                    type: 'POST', // Send post data
+                    allDayDefault: true,
+                    error: function() {
+                        alert('There was an error while fetching Closing events.');
+                    },
+                    backgroundColor: '#ff8080',
+                    textColor: 'black'
+                  },
+                  {
+                    url: '/get_events/book%20club',
+                    type: 'POST', // Send post data
+                    error: function() {
+                        alert('There was an error while fetching Book Club events.');
+                    },
+                    backgroundColor: '#ffff66',
+                    textColor: 'black'
+                  },
+                  {
+                    url: '/get_events/class',
+                    type: 'POST', // Send post data
+                    error: function() {
+                        alert('There was an error while fetching Class events.');
+                    },
+                    backgroundColor: '#99ccff',
+                    textColor: 'black'
+                  },
+                  {
+                    url: '/get_events/store%20event',
+                    type: 'POST', // Send post data
+                    error: function() {
+                        alert('There was an error while fetching Store Event events.');
+                    },
+                    backgroundColor: '#71da71',
+                    textColor: 'black'
+                  },
+                ],
+                eventBorderColor: '#bfbfbf',
+                eventRender: function (event, element) {
+                  element.attr('href', 'javascript:void(0);');
+                  element.click(function() {
+                    $("#eventTitle").html(event.title);
+                    $("#eventType").html(toTitleCase(event.event_type));
+                    $("#startTime").html(moment(event.start).format('MMM Do h:mm A'));
+                    $("#endTime").html(moment(event.end).format('MMM Do h:mm A'));
+                    $("#eventInfo").html(event.description);
+                    $("#eventContent").modal({ fadeDuration: 100 });
+                  });
+                }
+              })
+
+            });
+
+          });
+        </script>
+
+
+      </div>

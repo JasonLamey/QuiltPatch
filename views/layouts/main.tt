@@ -4,10 +4,13 @@
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Quilt Patch</title>
-    <link rel="stylesheet" href="/css/app.css">
-    <link rel="stylesheet" href="/js/vendor/jqueryui/jquery-ui.min.css">
-    <link rel="stylesheet" href="/js/vendor/fullcalendar/fullcalendar.min.css">
+    <title>
+      The Quilt Patch
+      [% IF title %] | [% title %][% END %]
+    </title>
+    <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/app.css">
+    <link rel="stylesheet" type="text/css" href="/css/jquery.modal.min.css">
     <script src="/js/vendor/jquery/jquery-3.2.1.min.js"></script>
     <script src="/js/vendor/jqueryui/jquery-ui.min.js"></script>
   </head>
@@ -18,7 +21,13 @@
       </div>
       <div class="small-12 medium-6 columns text-center" data-equalizer-watch="header">
         <h1 class="portfolio-hero-header-h1">The Quilt Patch</h1>
-        <h4 class="portfolio-hero-header-h4">Bernina of Northern Virginia</h4>
+        <h4 class="portfolio-hero-header-h4">
+          [% IF title %]
+          [% title %]
+          [% ELSE %]
+          Bernina of Northern Virginia
+          [% END %]
+        </h4>
         <ul class="portfolio-hero-header-description">
           <li>10381 Main Street, Fairfax, Virginia 22030 &middot; 703-273-6937<br>
               Hours: Monday-Saturday 10-5, Sunday 12-5</li>
@@ -50,7 +59,7 @@
 
       <div class="small-9 medium-10 columns content-copy" data-equalizer-watch="content">
 
-        <% content %>
+        [% content %]
 
       </div>
     </div>
@@ -71,5 +80,6 @@
     <script src="https://use.fontawesome.com/bbc3509751.js"></script>
     <script src="/js/vendor/fullcalendar/moment.min.js"></script>
     <script src="/js/vendor/fullcalendar/fullcalendar.min.js"></script>
+    <script src="/js/vendor/jquery-modal/jquery.modal.min.js"></script>
   </body>
 </html>

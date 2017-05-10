@@ -101,13 +101,26 @@
   padding: 0.5rem; }
 
 #calendar {
-  height: 700px; }
+  margin: 0 auto;
+  min-height: 700px; }
 
 .calendar-box {
   margin: 2rem 0; }
 
 .fc-scroller {
-  overflow-y: hidden !important; }
+  /* overflow-y: hidden !important; */ }
+
+.fc table {
+  margin: 0 !important; }
+
+.fc table thead, .fc table tbody {
+  background: none;
+  background-color: transparent; }
+
+.fc-content-skeleton tbody td, .fc-content-skeleton td {
+  empty-cells: hide;
+  background: none;
+  background-color: transparent; }
 
 .index-format img {
   float: left;
