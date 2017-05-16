@@ -1,0 +1,10 @@
+            /* This needs to be inserted inside a document ready block. */
+            $("#pagination-content").easyPaginate({
+              elementsPerPage: 5,
+              effect: 'climb',
+              paginateElement: 'blockquote',
+              firstButtonText: '<i class="fa fa-arrow-circle-left fa-fw"></i>',
+              lastButtonText: '<i class="fa fa-arrow-circle-right fa-fw"></i>',
+              prevButtonText: '<i class="fa fa-chevron-circle-left fa-fw"></i>',
+              nextButtonText: '<i class="fa fa-chevron-circle-right fa-fw"></i>'
+            });

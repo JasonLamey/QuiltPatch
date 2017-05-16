@@ -5,8 +5,7 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-      The Quilt Patch
-      [% IF title %] | [% title %][% END %]
+      The Quilt Patch[% IF title %] | [% title %][% END %]
     </title>
     <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.min.css">
     <link rel="stylesheet" type="text/css" href="/css/app.css">
@@ -40,15 +39,15 @@
       </div>
     </header>
 
-    <div class="row content-grid" data-equalizer="content">
-      <div class="small-3 medium-2 columns side-menu" data-equalizer-watch="content">
+    <div class="row content-grid off-canvas-wrapper" data-equalizer="content">
+      <div class="side-menu off-canvas-absolute position-left reveal-for-medium" id="offCanvasLeft" data-equalizer-watch="content" data-off-canvas>
         <div class="side-menu-item"><a href="/"><i class="fa fa-home fa-fw" aria-hidden="true"></i> Home</a></div>
         <div class="side-menu-item"><a href="/calendar"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> Calendar</a></div>
         <div class="side-menu-item"><a href="/classes"><i class="fa fa-graduation-cap fa-fw" aria-hidden="true"></i> Classes</a></div>
         <div class="side-menu-item"><a href="/clubs"><i class="fa fa-group fa-fw" aria-hidden="true"></i> Clubs</a></div>
         <div class="side-menu-item"><a href="/embroidery"><i class="fa fa-cubes fa-fw" aria-hidden="true"></i> Embroidery</a></div>
-        <div class="side-menu-item"><a href="/qp_news"><i class="fa fa-bullhorn fa-fw" aria-hidden="true"></i> QP News</a></div>
-        <div class="side-menu-item"><a href="/bernina_news"><i class="fa fa-newspaper-o fa-fw" aria-hidden="true"></i> Bernina News</a></div>
+        <div class="side-menu-item"><a href="/news/QP"><i class="fa fa-bullhorn fa-fw" aria-hidden="true"></i> QP News</a></div>
+        <div class="side-menu-item"><a href="/news/Bernina"><i class="fa fa-newspaper-o fa-fw" aria-hidden="true"></i> Bernina News</a></div>
         <div class="side-menu-item"><a href="/services"><i class="fa fa-handshake-o fa-fw" aria-hidden="true"></i> Services</a></div>
         <div class="side-menu-item"><a href="/directions"><i class="fa fa-map-marker fa-fw" aria-hidden="true"></i> Directions</a></div>
         <div class="side-menu-item"><a href="/contact_us"><i class="fa fa-paper-plane fa-fw" aria-hidden="true"></i> Contact Us</a></div>
@@ -57,7 +56,8 @@
         <div class="side-menu-item"><a href="/links"><i class="fa fa-sign-in fa-fw" aria-hidden="true"></i> Login / Sign Up</a></div>
       </div>
 
-      <div class="small-9 medium-10 columns content-copy" data-equalizer-watch="content">
+      <div class="content-copy off-canvas-content" data-equalizer-watch="content" data-off-canvas>
+        <button type="button" class="button show-for-small-only" data-toggle="offCanvasLeft"><i class="fa fa-bars fa-fw"></i>Menu</button>
 
         [% content %]
 
@@ -81,5 +81,6 @@
     <script src="/js/vendor/fullcalendar/moment.min.js"></script>
     <script src="/js/vendor/fullcalendar/fullcalendar.min.js"></script>
     <script src="/js/vendor/jquery-modal/jquery.modal.min.js"></script>
+    <script src="/js/vendor/easyPaginate/jquery.easyPaginate.js"></script>
   </body>
 </html>

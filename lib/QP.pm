@@ -18,6 +18,8 @@ const my $DT_PARSER => $SCHEMA->storage->datetime_parser;
 const my $TODAY     => DateTime->today( time_zone => 'America/New_York' );
 const my $NOW       => DateTime->now( time_zone => 'America/New_York' );
 
+$SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
+
 get '/' => sub {
   my @news = $SCHEMA->resultset( 'News' )->search(
                                                   {
@@ -160,6 +162,134 @@ any '/get_events/?:event_type?' => sub
   }
 
   return to_json( \@json_events );
+};
+
+get '/news/:news_type/:news_id' => sub
+{
+  my $news_type = route_parameters->get( 'news_type' ) // 'QP'; # QP or Bernina
+  my $news_id   = route_parameters->get( 'news_id' )   // undef;
+
+  if ( ! defined $news_id && $news_id < 1 )
+  {
+    redirect '/news/' . $news_type;
+  }
+
+  my $news_article = $SCHEMA->resultset( 'News')->find(
+                                                        {
+                                                          id => $news_id,
+                                                        }
+  );
+
+  template 'news_article',
+  {
+    title => ( ( uc($news_type) eq 'BERNINA' ) ? 'Bernina' : 'Quilt Patch' )
+              . ' News | ' . $news_article->title,
+    data =>
+    {
+      news_article => $news_article,
+    },
+  };
+};
+
+get '/news/?:news_type?' => sub
+{
+  my $news_type = route_parameters->get( 'news_type' ) // 'QP'; # QP or Bernina
+
+  my @news_articles = $SCHEMA->resultset( 'News' )->search(
+                                                            {
+                                                              news_type => $news_type,
+                                                            },
+                                                            {
+                                                              order_by => { -desc => 'timestamp' },
+                                                            }
+  );
+
+  template 'news',
+  {
+    title => ( ( uc($news_type) eq 'BERNINA' ) ? 'Bernina' : 'Quilt Patch' ) . ' News',
+    data  =>
+    {
+      news_type => $news_type,
+      news => \@news_articles,
+    }
+  };
+};
+
+get '/classes/:group_id' => sub
+{
+  my $group_id = route_parameters->get( 'group_id' ) // undef;
+
+  if
+  (
+    ! defined $group_id
+    or
+    $group_id =~ /\D/
+  )
+  {
+    redirect '/classes';
+  }
+
+  my $class_group     = $SCHEMA->resultset( 'ClassGroup' )->find( $group_id );
+
+  if ( ! defined $class_group )
+  {
+    redirect '/classes';
+  }
+
+  my @class_subgroups = $class_group->search_related(
+                                                      'subgroups',
+                                                      undef,
+                                                      {
+                                                        order_by => { -asc => 'order_by' },
+                                                      },
+  );
+
+  my @classes = $SCHEMA->resultset( 'Class' )->search(
+                                                      {
+                                                        'me.class_group_id' => $group_id,
+                                                        'dates.date' => { '>=' => $TODAY->ymd },
+                                                      },
+                                                      {
+                                                        prefetch =>
+                                                        [
+                                                          'dates',
+                                                        ],
+                                                        order_by =>
+                                                        {
+                                                          -asc => [ 'title' ],
+                                                        }
+                                                      },
+  );
+
+  if ( scalar( @class_subgroups ) > 0 )
+  {
+    @classes =
+      sort
+      {
+        $a->subgroup->order_by <=> $b->subgroup->order_by
+        ||
+        $a->title cmp $b->title
+      } @classes;
+  }
+
+  template 'classes_list',
+  {
+    title => sprintf( 'Classes | %s', $class_group->name ),
+    data =>
+    {
+      class_group     => $class_group,
+      class_subgroups => \@class_subgroups,
+      classes         => \@classes,
+    }
+  };
+};
+
+get '/classes' => sub
+{
+  template 'classes',
+  {
+    title => 'Classes',
+  };
 };
 
 true;

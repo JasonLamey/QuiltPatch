@@ -67,3 +67,5 @@ __PACKAGE__->add_columns(
                         );
 
 __PACKAGE__->set_primary_key( 'id' );
+
+1;

@@ -1,0 +1,73 @@
+[% USE date %]
+[% news_type = 'Quilt Patch' %]
+[% IF data.news_type.upper == 'BERNINA' %][% news_type = 'Bernina' %][% END %]
+        <div class="row column">
+          <div class="callout">
+
+            <h3>[% news_type %] News</h3>
+
+            <div id="pagination-content">
+              [% IF data.news.defined && data.news.size > 0 %] 
+                [% FOREACH item IN data.news %]
+                [% PROCESS news_item %]
+                [% END %]
+              [% ELSE %]
+                <div class="row column text-center">
+                  <h6>No News Items To Show At This Time</h6>
+                </div>
+              [% END %]
+            </div>
+
+          </div>
+        </div>
+
+        <script>
+          $(document).ready(function() {
+            [% PROCESS 'partials/_pagination_js.tt' %]
+          });
+        </script>
+
+[% BLOCK news_item %]
+              <blockquote>
+                <div class="article-row">
+                  <div class="row column">
+                    <h4>[% item.title %]</h4>
+                  </div>
+                  <div class="row">
+                    <div class="small-12 medium-6 columns">
+                      <span class="byline">Posted: [% date.format(item.timestamp, '%a, %d %B %Y') %]</span>
+                    </div>
+                    <div class="small-12 medium-6 columns">
+                      <strong>Share:</strong>
+                      <a href="#">
+                        <span class="fa-stack">
+                          <i class="fa fa-square-o fa-stack-2x"></i>
+                          <i class="fa fa-facebook fa-stack-1x"></i>
+                        </span>
+                      </a>
+                      <a href="#">
+                        <span class="fa-stack">
+                          <i class="fa fa-square-o fa-stack-2x"></i>
+                          <i class="fa fa-twitter fa-stack-1x"></i>
+                        </span>
+                      </a>
+                      <a href="#">
+                        <span class="fa-stack">
+                          <i class="fa fa-square-o fa-stack-2x"></i>
+                          <i class="fa fa-pinterest fa-stack-1x"></i>
+                        </span>
+                      </a>
+                      <a href="#">
+                        <span class="fa-stack">
+                          <i class="fa fa-square-o fa-stack-2x"></i>
+                          <i class="fa fa-tumblr fa-stack-1x"></i>
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                  <div class="row column">
+                    [% item.article %]
+                  </div>
+                </div>
+              </blockquote>
+[% END %]
