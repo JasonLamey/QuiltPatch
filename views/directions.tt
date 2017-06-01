@@ -1,0 +1,144 @@
+                <div class="row column">
+                  <div class="callout">
+                    <div class="row">
+                      <div class="small-12 medium-8 columns">
+                        The Quilt Patch is located at 10381 Main Street in the City of Fairfax.
+                        Main Street now travels in both directions (it was one-way),
+                        so you may want to refer to the directions below.
+                      </div>
+                      <div class="small-12 medium-4 columns">
+                        <img src="/images/QPHomePic2.jpg" alt="The Quilt Patch">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row column">
+                  <div class="callout">
+
+                    <div class="row column">
+                      <form id="customDirections">
+                        <label for="from">From:
+                          <input name="from" type="text" id="txtSource" placeholder="Your Address">
+                        </label>
+                        <label for="to">To:
+                          <input name="to" type="text" id="txtDestination" value="10381 Main Street, Fairfax, VA 22030" readonly="readonly" disabled="disabled">
+                        </label>
+                        <button class="button" type="submit" id="customDirectionsSubmit"><i class="fa fa-map-marker fa-fw"></i> Get Custom Directions</button>
+                      </form>
+                    </div>
+
+                    <div class="row">
+                      <div class="small-12 medium-8 columns">
+                        <div id="dvMap">
+                        </div>
+                      </div>
+                      <div class="small-12 medium-4 columns">
+                        <div id="dvPanel">
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div class="row column">
+                  <div class="callout">
+                    <h4>From the Washington Beltway (I-495)</h4>
+                    <p>Take Rt. 236 (Little River Turnpike) west to Fairfax City. You will pass Northern Virginia Community College on the left. Continue on Rt. 236 past Pickett Road. Notice that as you enter the City of Fairfax, the speed limit drops to 25 miles per hour.</p>
+
+                    <p>Since Main Street is now a two-way street, stay left as you enter the City of Fairfax to stay on Main Street. The Quilt Patch is the first building on the left. It is a blue Victorian house. Turn left into the Victorian Square parking lot. See the map above.</p>
+
+                    <h4>From the West and I-66</h4>
+                    <p>Take Rt. 123 (Chain Bridge Road) south to Fairfax. Notice that as you enter the City of Fairfax, the speed limit drops to 25 miles per hour. Pass the Fairfax Library on your left.</p>
+
+                    <p>Turn right onto North St. (Rt. 236W).  Immediately get into far left lane, following signs to Main St. and Rt. 236E. Turn left onto Main St. and, staying in the right lane, cross Rt. 123 and University  Dr. The Quilt Patch is the second building on the right. It is a blue Victorian house. Turn right into the Victorian Square parking lot. See the map above.</p>
+
+                    <h4>Class Parking</h4>
+                    <p>If you are taking a class in the classroom downstairs, you'll want to park downstairs in the covered parking lot.  Turn south onto University Drive and turn into the first drive on the left.  You'll see the brick entrance to the garage.</p>
+                  </div>
+                </div>
+
+<script type="text/javascript">
+  jQuery( document ).ready(
+    function($) {
+
+      var qpAddress = "10381 Main Street, Fairfax, Virginia 22030";
+      var qpCenter = [38.845686, -77.304868];
+
+      $('#dvMap')
+      .gmap3({
+        map: {
+          address: qpAddress,
+          options: {
+            zoom: 16,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+              style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+            },
+            navigationControl: true,
+            scrollwheel: true,
+            streetViewControl: true,
+          }
+        },
+        marker: {
+          address: qpAddress,
+          title: 'The Quilt Patch'
+        },
+        infowindow: {
+          address: qpAddress,
+          options: {
+            content: "<strong>The Quilt Patch</strong><br>10381 Main Street, Fairfax, Virginia 22030"
+          }
+        }
+      });
+
+
+      $('#customDirectionsSubmit').click(
+        function(e) {
+          e.preventDefault();
+
+          document.getElementById('dvPanel').innerHTML = '';
+
+          var start = document.getElementById('txtSource').value;
+          var qpAddress = "10381 Main Street, Fairfax, Virginia 22030";
+          var qpCenter = [38.845686, -77.304868];
+
+          $('#dvMap')
+          .gmap3({
+            clear: { tag: 'maproute', last: true },
+            getroute: {
+              options: {
+                origin: start,
+                destination: qpAddress,
+                travelMode: google.maps.DirectionsTravelMode.DRIVING
+              },
+              callback: function( results ) {
+                if ( !results ) return;
+                $(this).gmap3({
+                  map: {
+                    options: {
+                      center: qpCenter,
+                      zoom: 10
+                    },
+                  },
+                  directionsrenderer: {
+                    container: $("#dvPanel"),
+                    options: {
+                      directions: results
+                    },
+                    tag: 'maproute'
+                  }
+                });
+              }
+            }
+          });
+
+          return false;
+        }
+      );
+
+    }
+  );
+</script>

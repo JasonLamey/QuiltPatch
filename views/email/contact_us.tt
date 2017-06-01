@@ -1,0 +1,18 @@
+[% USE date %]
+<p>Greetings,</p>
+
+<p>The following Contact Us message has been recieved:
+
+<hr>
+
+<ul>
+  <li><strong>Name:</strong> [% name %]</li>
+  <li><strong>Email:</strong> [% email %]</li>
+  <li><strong>Date:</strong> [% date.format( created, format = datetime_format_long ) %]</li>
+  <li><strong>Message:</strong><br>[% message %]</li>
+</ul>
+
+<hr>
+
+Respectfully,
+<p>-- The Quilt Patch</p>

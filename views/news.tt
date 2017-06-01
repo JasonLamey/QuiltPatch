@@ -37,32 +37,12 @@
                     <div class="small-12 medium-6 columns">
                       <span class="byline">Posted: [% date.format(item.timestamp, '%a, %d %B %Y') %]</span>
                     </div>
-                    <div class="small-12 medium-6 columns">
+                    <div class="small-12 medium-6 columns text-right">
                       <strong>Share:</strong>
-                      <a href="#">
-                        <span class="fa-stack">
-                          <i class="fa fa-square-o fa-stack-2x"></i>
-                          <i class="fa fa-facebook fa-stack-1x"></i>
-                        </span>
-                      </a>
-                      <a href="#">
-                        <span class="fa-stack">
-                          <i class="fa fa-square-o fa-stack-2x"></i>
-                          <i class="fa fa-twitter fa-stack-1x"></i>
-                        </span>
-                      </a>
-                      <a href="#">
-                        <span class="fa-stack">
-                          <i class="fa fa-square-o fa-stack-2x"></i>
-                          <i class="fa fa-pinterest fa-stack-1x"></i>
-                        </span>
-                      </a>
-                      <a href="#">
-                        <span class="fa-stack">
-                          <i class="fa fa-square-o fa-stack-2x"></i>
-                          <i class="fa fa-tumblr fa-stack-1x"></i>
-                        </span>
-                      </a>
+<a href="mailto:?[% item.title.replace( ' ', '%20' ) %]%20-%20Quilt%20Patch&body=http://www.quiltpatchva.com/news/[% item.id %]"><i class="fa fa-envelope fa-fw"></i></a>
+<a href="https://www.facebook.com/sharer/sharer.php?u=http://www.quiltpatchva.com/news/[% item.id %]" target="_blank"><i class="fa fa-facebook fa-fw"></i></a>
+<a href="https://twitter.com/intent/tweet?text=[% item.title.replace( ' ', '%20') %]%20-%20Quilt%20Patch%20-%20http://www.quiltpatchva.com/news/[% item.id %]" target="_blank"><i class="fa fa-twitter fa-fw"></i></a>
+<a href="http://pinterest.com/pin/create/button/?url=http://www.quiltpatchva.com/news/[% item.id %]&media=/images/QPLogo.gif&description=[% item.title.replace(' ', '%20' ) %]" target="_blank"><i class="fa fa-pinterest fa-fw"></i></a>
                     </div>
                   </div>
                   <div class="row column">

@@ -1,5 +1,6 @@
 package QP;
 use Dancer2;
+use Dancer2::Plugin::Flash;
 
 use strict;
 use warnings;
@@ -10,17 +11,17 @@ use DateTime;
 use URI::Escape::JavaScript;
 
 use QP::Schema;
+use QP::Mail;
 
 our $VERSION = '2.0';
 
 const my $SCHEMA    => QP::Schema->db_connect();
 const my $DT_PARSER => $SCHEMA->storage->datetime_parser;
-const my $TODAY     => DateTime->today( time_zone => 'America/New_York' );
-const my $NOW       => DateTime->now( time_zone => 'America/New_York' );
 
 $SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
 
 get '/' => sub {
+  my $today = DateTime->today( time_zone => 'America/New_York' );
   my @news = $SCHEMA->resultset( 'News' )->search(
                                                   {
                                                     news_type => 'QP',
@@ -29,7 +30,7 @@ get '/' => sub {
                                                       expires => undef,
                                                       expires =>
                                                       {
-                                                        '>=' => $DT_PARSER->format_datetime($TODAY)
+                                                        '>=' => $DT_PARSER->format_datetime($today)
                                                       },
                                                     ],
                                                   },
@@ -44,7 +45,7 @@ get '/' => sub {
                                                     event_type   => 'Store Event',
                                                     end_datetime =>
                                                     {
-                                                      '>=' => $DT_PARSER->format_datetime($TODAY)
+                                                      '>=' => $DT_PARSER->format_datetime($today)
                                                     },
                                                     is_private   => 'false',
                                                   },
@@ -58,7 +59,7 @@ get '/' => sub {
                                                     event_type   => 'Closing',
                                                     end_datetime =>
                                                     {
-                                                      '>=' => $DT_PARSER->format_datetime($TODAY)
+                                                      '>=' => $DT_PARSER->format_datetime($today)
                                                     },
                                                     is_private   => 'false',
                                                   },
@@ -94,11 +95,12 @@ get '/calendar' => sub
 
 any '/get_events/?:event_type?' => sub
 {
+  my $today      = DateTime->today( time_zone => 'America/New_York' );
   my $event_type = route_parameters->get( 'event_type' ) // undef;
   my $start      = body_parameters->get( 'start' )
-                  // $TODAY->year() . '-' . $TODAY->month() . '-01';
+                  // $today->year() . '-' . $today->month() . '-01';
   my $end        = body_parameters->get( 'end' )
-                  // DateTime->last_day_of_month( year => $TODAY->year(), month => $TODAY->month() );
+                  // DateTime->last_day_of_month( year => $today->year(), month => $today->month() );
   if ( defined $event_type )
   {
     if (
@@ -217,6 +219,7 @@ get '/news/?:news_type?' => sub
 
 get '/classes/:group_id' => sub
 {
+  my $today    = DateTime->today( time_zone => 'America/New_York' );
   my $group_id = route_parameters->get( 'group_id' ) // undef;
 
   if
@@ -247,7 +250,11 @@ get '/classes/:group_id' => sub
   my @classes = $SCHEMA->resultset( 'Class' )->search(
                                                       {
                                                         'me.class_group_id' => $group_id,
-                                                        'dates.date' => { '>=' => $TODAY->ymd },
+                                                        -or =>
+                                                        [
+                                                          'dates.date' => { '>=' => $today->ymd },
+                                                          always_show => 1,
+                                                        ],
                                                       },
                                                       {
                                                         prefetch =>
@@ -289,6 +296,224 @@ get '/classes' => sub
   template 'classes',
   {
     title => 'Classes',
+  };
+};
+
+get '/clubs' => sub
+{
+  my $today   = DateTime->today( time_zone => 'America/New_York' );
+  my @classes = $SCHEMA->resultset( 'Class' )->search(
+                                                      {
+                                                        is_also_club => 1,
+                                                        'dates.date' => { '>=' => $today->ymd },
+                                                      },
+                                                      {
+                                                        prefetch =>
+                                                        [
+                                                          'dates',
+                                                        ],
+                                                        order_by =>
+                                                        {
+                                                          -asc => [ 'title' ],
+                                                        }
+                                                      },
+  );
+
+  template 'clubs',
+  {
+    title => 'Clubs',
+    data =>
+    {
+      classes => \@classes,
+    },
+  };
+};
+
+get '/embroidery' => sub
+{
+  my $today   = DateTime->today( time_zone => 'America/New_York' );
+  my @classes = $SCHEMA->resultset( 'Class' )->search(
+                                                      {
+                                                        is_also_embroidery => 1,
+                                                        'dates.date' => { '>=' => $today->ymd },
+                                                      },
+                                                      {
+                                                        prefetch =>
+                                                        [
+                                                          'dates',
+                                                        ],
+                                                        order_by =>
+                                                        {
+                                                          -asc => [ 'title' ],
+                                                        }
+                                                      },
+  );
+
+  template 'embroidery',
+  {
+    title => 'Embroidery',
+    data =>
+    {
+      classes => \@classes,
+    },
+  };
+};
+
+post '/search' => sub
+{
+  my $search = body_parameters->get( 'search' ) // undef;
+
+  if ( ! defined $search or $search =~ /^[\s\W]+$/ )
+  {
+    flash( error => 'Invalid search term.' );
+    redirect '/classes';
+  }
+
+  my @classes = $SCHEMA->resultset( 'Class' )->search(
+                                                      {
+                                                        -or =>
+                                                        [
+                                                          'me.title' => { 'like' => '%'.$search.'%' },
+                                                          'me.description' => { 'like' => '%'.$search.'%' },
+                                                        ],
+                                                      },
+                                                      {
+                                                        prefetch =>
+                                                        [
+                                                          'dates',
+                                                        ],
+                                                        order_by =>
+                                                        {
+                                                          -asc => [ 'title' ],
+                                                        }
+                                                      },
+  );
+
+  template 'search_results',
+  {
+    title => sprintf( 'Search Results For: &quot;%s&quot;', $search ),
+    data =>
+    {
+      search  => $search,
+      classes => \@classes,
+    },
+  };
+};
+
+get '/services' => sub
+{
+  template 'services',
+  {
+    title => 'Services',
+  };
+};
+
+get '/contact_us' => sub
+{
+  my $username  = body_parameters->get( 'username' )  // undef;
+  my $full_name = body_parameters->get( 'full_name' ) // undef;
+  my $email     = body_parameters->get( 'email' )     // undef;
+  my $comments  = body_parameters->get( 'comments' )  // undef;
+
+  template 'contact_us',
+  {
+    title => 'Contact Us',
+    data  =>
+    {
+      form =>
+      {
+        username  => $username,
+        full_name => $full_name,
+        email     => $email,
+        comments  => $comments,
+      }
+    },
+  };
+};
+
+post '/contact_us' => sub
+{
+  my $username  = body_parameters->get( 'username' )  // undef;
+  my $full_name = body_parameters->get( 'full_name' ) // undef;
+  my $email     = body_parameters->get( 'email' )     // undef;
+  my $comments  = body_parameters->get( 'comments' )  // undef;
+
+  my @errors = ();
+  if ( ! defined $full_name || $full_name =~ /^\s*$/ )
+  {
+    push @errors, '<strong>Full Name</strong> must be filled out.';
+  }
+  if ( ! defined $email || $email =~ /^\s*$/ )
+  {
+    push @errors, '<strong>E-mail Address</strong> must be filled out.';
+  }
+  if ( ! defined $comments || $comments =~ /^\s*$/ )
+  {
+    push @errors, '<strong>Message</strong> must be filled out.';
+  }
+
+  if ( scalar( @errors ) > 0 )
+  {
+    flash( error => sprintf( 'One or more errors occurred. Please correct the following:<br>%s', join( '<br>', @errors ) ) );
+    forward '/contact_us',
+      {
+        username  => $username,
+        full_name => $full_name,
+        email     => $email,
+        comments  => $comments,
+      },
+      { method => 'GET' };
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' );
+
+  my $new_contact = $SCHEMA->resultset( 'ContactUs' )->new(
+    {
+      username   => $username,
+      full_name  => $full_name,
+      email      => $email,
+      comments   => $comments,
+      created_at => $now,
+    }
+  );
+  $new_contact->insert();
+
+  my $email_sent = QP::Mail::send_contact_us_notification(
+    name       => ( $username && $full_name ? sprintf( '%s (%s)', $full_name, $username) : $full_name ),
+    email      => $email,
+    message    => $comments,
+    created_on => $now,
+  );
+
+  if ( ! $email_sent->{'success'} )
+  {
+    warn sprintf( 'Could not send Contact Us message created at %s: %s',
+      $now, $email_sent->{'error'} );
+  }
+
+  flash( success => sprintf( 'Thank you, %s! You message has been sent!', $full_name ) );
+  redirect '/contact_us';
+};
+
+get '/links' => sub
+{
+  my @links = ();
+
+  template 'links',
+  {
+    title => 'Links',
+    data =>
+    {
+      links => \@links,
+    },
+  };
+};
+
+get '/directions' => sub
+{
+  template 'directions',
+  {
+    title => 'Directions',
   };
 };
 

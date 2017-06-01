@@ -1,0 +1,174 @@
+[% USE date %]
+[% calc  = date.calc %]
+            <div class="row column">
+              <div class="class-block callout">
+                <a name="[% item.id %]" id="[% item.id %]"></a>
+
+                <div class="row">
+                  <div class="small-9 columns">
+                <h6>
+                  [% IF item.new %] <span class="new"><i class="fa fa-certificate fa-fw"></i>NEW!</span> [% END %]
+                  [% item.title %]
+                </h6>
+                  </div>
+                  <div class="small-3 columns text-right">
+                    <strong>Share:</strong>
+                    <a href="mailto:?[% item.title.replace( ' ', '%20' ) %]%20Class%20at%20Quilt%20Patch&body=http://www.quiltpatchva.com/classes/[% item.class_group_id %]#[% item.id %]"><i class="fa fa-envelope fa-fw"></i></a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=http://www.quiltpatchva.com/classes/[% item.class_group_id %]#[% item.id %]" target="_blank"><i class="fa fa-facebook fa-fw"></i></a>
+                    <a href="https://twitter.com/intent/tweet?text=[% item.title.replace( ' ', '%20') %]%20Class%20at%20Quilt%20Patch%20-%20http://www.quiltpatchva.com/classes/[% item.class_group_id %]#[% item.id %]" target="_blank"><i class="fa fa-twitter fa-fw"></i></a>
+                    <a href="http://pinterest.com/pin/create/button/?url=http://www.quiltpatchva.com/classes/[% item.class_group_id %]#[% item.id %]&media=/images/QPLogo.gif&description=[% item.title.replace(' ', '%20' ) %]" target="_blank"><i class="fa fa-pinterest fa-fw"></i></a>
+                  </div>
+                </div>
+                <div>
+                  [% item.description %]
+                  [% IF item.no_supply_list == 0 %]
+                    [% IF item.supply_list_filename.defined && item.supply_list_filename != '' %]
+                    Ask or <a href="/downloads/supply_lists/[% item.supply_list_filename %]">click here</a> for a supply list.
+                    [% ELSE %]
+                    Ask for a supply list.
+                    [% END %]
+                  [% END %]
+                </div>
+
+                <div class="row">
+                  <div class="small-6 medium-2 columns">
+                    [% IF item.fee.defined %][% item.fee %][% ELSE %]No Fee[% END %]
+                  </div>
+                  <div class="small-6 medium-2 columns">
+                    [% item.num_sessions %]
+                  </div>
+                  <div class="small-6 medium-3 columns">
+                    [% item.skill_level %]
+                  </div>
+                  <div class="small-6 medium-5 columns">
+                    [% IF item.teacher.defined %]Instructor, <a href="/classes/by_teacher/[% item.teacher_id %]">[% item.teacher.name %]</a>[% IF item.teacher2.defined %], <a href="/classes/by_teacher/[% item.secondary_teacher_id %]">[% item.teacher2.name %]</a>[% IF item.teacher3.defined %], <a href="/classses/by_teacher/[% item.tertiary_teacher_id %]">[% item.teacher3.name %]</a>[% END %][% END %][% END %]
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="small-12 columns">
+
+            [% dates = {} %]
+            [% today = date.format( date.now, '%Y-%m-%d 00:00:00' ) %]
+            [%
+                tyear = date.format( today, '%Y' );
+                tmon  = date.format( today, '%m' );
+                tday  = date.format( today, '%d' );
+            %]
+            [%
+                FOREACH dateitem IN item.dates;
+                  dateitem.date = dateitem.date.replace( '-', '/' );
+                  dateitem.date = dateitem.date _ ' 00:00:00';
+
+                  dyear = date.format( dateitem.date, '%Y' );
+                  dmon  = date.format( dateitem.date, '%m' );
+                  dday  = date.format( dateitem.date, '%d' );
+
+                  NEXT IF calc.Delta_Days( tyear, tmon, tday, dyear, dmon, dday ) < 0;
+
+                  date_group_order = 0;
+                  IF dateitem.date_group_order.defined && dateitem.date_group_order != '';
+                    date_group_order = dateitem.date_group_order;
+                  END;
+
+                  dow = calc.Day_of_Week( dyear, dmon, dday );
+
+                  IF dow == 7;
+                    dow = 1;
+                  ELSE;
+                    dow = dow + 1;
+                  END;
+
+                  IF ! dates.$date_group_order.$dow.defined;
+                    dates.$date_group_order.$dow = [];
+                  END;
+                  dates.$date_group_order.$dow.push( dateitem );
+
+                END;
+            %]
+
+            [% date_output = '' %]
+
+            [%
+                FOREACH dategroup IN dates.nsort;
+
+                  FOREACH weekday IN dates.$dategroup.nsort;
+
+                    prev_year       = '';
+                    prev_month      = '';
+                    day_times       = '';
+                    date_group_name = '';
+
+                    date_list = '';
+                    date_list_array = [];
+
+                    FOREACH datehash IN dates.$dategroup.$weekday.nsort;
+
+                      year_string = '';
+                      this_year = date.format( datehash.date, '%Y' );
+                      IF this_year != prev_year;
+                        prev_year = this_year;
+                        year_string = "<span class='year-tag'>($this_year)</span> ";
+                      END;
+
+                      IF day_times == '';
+
+                        day_name = date.format( datehash.date, '%a' ).upper;
+                        start_time1 = date.format( "$dyear/$dmon/$dday " _ datehash.start_time1, '%l:%M%p' );
+                        end_time1   = date.format( "$dyear/$dmon/$dday " _ datehash.end_time1, '%l:%M%p' );
+                        day_times = day_name _ ' ' _ start_time1 _ '-' _ end_time1;
+
+                        IF datehash.start_time2.defined;
+                          start_time2 = date.format( "$dyear/$dmon/$dday " _ datehash.start_time2, '%l:%M%p' );
+                          end_time2   = date.format( "$dyear/$dmon/$dday " _ datehash.end_time2, '%l:%M%p' );
+                          day_times = day_times _ ' OR ' _ start_time2 _ '-' _ end_time2;
+                        END;
+
+                        day_times = day_times _ ':';
+
+                      END;
+
+                      IF datehash.date_group.defined;
+                        date_group_name = datehash.date_group;
+                      END;
+
+                      holiday = '';
+                      IF datehash.is_holiday == 1;
+                        holiday = ' (Holiday)';
+                      END;
+
+                      date_string = date.format( datehash.date, '%b %d' );
+                      date_parts = date_string.split( ' ' );
+
+                      IF date_parts.0 != prev_month;
+                        prev_month = date_parts.0;
+                      ELSE;
+                        date_string = date_parts.1;
+                      END;
+
+                      date_list_array.push( "$year_string$date_string$holiday" );
+
+                    END;
+
+                    IF date_list_array.defined && date_list_array.size > 0;
+                      date_list = date_list _ date_list_array.join( ', ' );
+                    END;
+
+                    IF date_group_name.defined && date_group_name != '';
+                      date_output = date_output _ date_group_name _ ": ";
+                    END;
+
+                    IF day_times.defined && date_list.defined;
+                      date_output = date_output _ '<strong> ' _ day_times _ "</strong> " _ date_list _ '<br>';
+                    END;
+
+                  END;
+                END;
+            %]
+                    [% date_output %]
+
+                  </div>
+                </div>
+
+              </div>
+            </div>

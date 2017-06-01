@@ -5,7 +5,7 @@
             <p>For a complete list of all current classes listed by teacher, <a href="/classes/by_teacher">click here</a>.</p>
 
             <div class="row align-center">
-              <div class="small-6 columns">
+              <div class="small-8 columns">
                 <form method="post" action="/search">
                   <div class="input-group">
                     <input class="input-group-field" type="text" placeholder="Search Our Classes" name="search">
@@ -76,27 +76,29 @@
 
             <h3>About Classes at the Quilt Patch</h3>
 
-            <p><b>Class supply lists</b> are embedded links within the class descriptions and are posted as they become available from the instructors.  If you need to purchase required books, patterns, etc. from the Quilt Patch, please let us know in advance to make sure we'll have enough in stock. We can reserve your items for you.</p>
+            <ul class="spaced-lis">
+              <li><b>Class supply lists</b> are embedded links within the class descriptions and are posted as they become available from the instructors.  If you need to purchase required books, patterns, etc. from the Quilt Patch, please let us know in advance to make sure we'll have enough in stock. We can reserve your items for you.</li>
 
-            <p>Your class enrollment entitles you to a <b>10% discount on purchases</b> during the class period.</p>
+              <li>Your class enrollment entitles you to a <b>10% discount on purchases</b> during the class period.</li>
 
-            <p>There are <b>two Bernina sewing machines available for your use</b> in the classroom.  We encourage you to use your own machine, but if this is not possible, please reserve a machine when you register.  If you love it, you can take it home that day for <b>25% off MSRP</b>.  Ask for more details.</p>
+              <li>There are <b>two Bernina sewing machines available for your use</b> in the classroom.  We encourage you to use your own machine, but if this is not possible, please reserve a machine when you register.  If you love it, you can take it home that day for <b>25% off MSRP</b>.  Ask for more details.</li>
 
-            <p>You must be comfortable using your sewing machine if you take a machine-oriented class.</p>
+              <li>You must be comfortable using your sewing machine if you take a machine-oriented class.</li>
 
-            <p>It's easier to <b>enter the shop for classes on the lower level</b>.  That way you can avoid hauling your supplies and machines up and down the stairs.</p>
+              <li>It's easier to <b>enter the shop for classes on the lower level</b>.  That way you can avoid hauling your supplies and machines up and down the stairs.</li>
 
-            <p>All classes are two hours long unless otherwise noted.</p>
+              <li>All classes are two hours long unless otherwise noted.</li>
 
-            <p>The Quilt Patch reserves the right to cancel a class if the <b>minimum number of 6 students</b> is not met.  You will be notified in advance and your enrollment fee refunded.</p>
+              <li>The Quilt Patch reserves the right to cancel a class if the <b>minimum number of 6 students</b> is not met.  You will be notified in advance and your enrollment fee refunded.</li>
 
-            <p>To receive a <b>refund of your class registration fee</b>, you must cancel two weeks before the class date.  If you must cancel your registration within the two week period, you may send another student in your place.</p>
+              <li>To receive a <b>refund of your class registration fee</b>, you must cancel two weeks before the class date.  If you must cancel your registration within the two week period, you may send another student in your place.</li>
 
-            <p><em>For the comfort of others, <b>please refrain from wearing heavily scented</b> perfumes, colognes, creams, etc.  Thank you.</em></p>
+              <li><em>For the comfort of others, <b>please refrain from wearing heavily scented</b> perfumes, colognes, creams, etc.  Thank you.</em></li>
 
-            <p>Please <b>do not bring children</b> to class.  We must also refuse requests to allow visiting grandmas, aunts, in-laws, etc. to "sit in" without paying the regular class fee.  Your cooperation is greatly appreciated.</p>
+              <li>Please <b>do not bring children</b> to class.  We must also refuse requests to allow visiting grandmas, aunts, in-laws, etc. to "sit in" without paying the regular class fee.  Your cooperation is greatly appreciated.</li>
 
-            <p>If you bring your lunch, please remember that we have no refrigeration available.</p>
+              <li>If you bring your lunch, please remember that we have no refrigeration available.</li>
+            </ul>
 
             <h3>Bad Weather Policy</h3>
 

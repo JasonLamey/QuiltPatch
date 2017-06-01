@@ -1,0 +1,20 @@
+[% USE date %]
+[% calc  = date.calc %]
+        <div class="row column">
+          <div class="callout">
+            <h4>Book Club</h4>
+          </div>
+        </div>
+
+        <div class="row column">
+          <div class="callout">
+
+            [% current_subgroup = '' %]
+            [% FOREACH item IN data.classes %]
+              [% PROCESS 'partials/_class_block.tt' %]
+            [% END %]
+
+          </div>
+        </div>
+
+      </div>

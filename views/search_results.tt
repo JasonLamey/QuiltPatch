@@ -1,0 +1,40 @@
+[% USE date %]
+[% calc  = date.calc %]
+
+        <div class="row column">
+          <div class="callout">
+
+            <div class="row align-center">
+              <div class="small-6 columns">
+                <form method="post" action="/search">
+                  <div class="input-group">
+                    <input class="input-group-field" type="text" placeholder="Search Our Classes" name="search" value="[% data.search %]">
+                    <div class="input-group-button">
+                      <input type="submit" class="button" value="Search">
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+
+            <h3>Search Results for &quot;[% data.search %]&quot;</h3>
+
+            <div class="highlight_mark">
+              [% IF data.classes.defined && data.classes.size > 0 %]
+                [% FOREACH item IN data.classes %]
+                  [% PROCESS 'partials/_class_block.tt' %]
+                [% END %]
+              [% ELSE %]
+                <div class="row column text-center"><h6>No Search Results Found</h6></div>
+              [% END %]
+            </div>
+
+          </div>
+        </div>
+
+        <script>
+          $(document).ready( function() {
+            $(".class-block").mark('[% data.search %]' );
+          });
+        </script>

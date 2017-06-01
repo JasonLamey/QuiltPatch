@@ -5330,6 +5330,31 @@ body {
 .new {
   color: #e68a00; }
 
+ul.spaced-list li {
+  margin-bottom: 1rem; }
+
+.image-right {
+  float: right; }
+
+.service-price-list {
+  margin-bottom: 1rem; }
+
+.service-price-list-no-margin {
+  margin-bottom: 0; }
+
+.service-price-list .indented, .service-price-list-no-margin .indented {
+  padding-left: 2rem; }
+
+#dvMap {
+  width: 100%;
+  height: 500px; }
+
+gm-map {
+  display: block;
+  width: 100%;
+  height: 500px;
+}
+
 /* PAGINATION LAYOUT */
 
 #pagination-content {

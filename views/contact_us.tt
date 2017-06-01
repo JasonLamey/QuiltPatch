@@ -1,0 +1,40 @@
+        <div class="row column">
+          <div class="callout">
+            <h3>Contact the Quilt Patch</h3>
+            <p>We'd love to hear from you. Send us your ideas, comments, and suggestions. All messages are received by Leslie!</p>
+
+            <div class="row align-center">
+              <div class="small-12 medium-10 columns">
+                <form method="post" action="/contact_us">
+                  <label for="username">Username (if you have a website account)
+                    <input type="text" name="username" maxlength="255" value="[% data.form.username %]">
+                  </label>
+
+                  <label for="full_name">Full Name <i class="fa fa-asterisk"></i>
+                    <input type="text" name="full_name" maxlength="255" placeholder="John Doe" value="[% data.form.full_name %]">
+                  </label>
+
+                  <label for="email">E-mail Address <i class="fa fa-asterisk"></i>
+                    <input type="text" name="email" maxlength="255" placeholder="johndoe@example.com" value="[% data.form.email %]">
+                  </label>
+
+                  <label for="comments">Message <i class="fa fa-asterisk"></i>
+                    <textarea name="comments" rows="10" placeholder="We love the Quilt Patch!">[% data.form.comments %]</textarea>
+                  </label>
+
+                  <button class="button" type="submit" formtarget="_self"><i class="fa fa-paper-plane fa-fw"></i> Send Message</button>
+
+                </form>
+              </div>
+            </div>
+
+            <br>
+            <h5>Contact the Webmaster</h5>
+            <p>We'd also love to hear your comments about our website. Please send your comments, concerns, and suggestions to <a href="mailto:jasonlamey@gmail.com?subject=The Quilt Patch Website">the webmaster</a>.</p>
+
+            <h5>Join Leslie in Cyberspace</h5>
+            <p>Leslie is tackling cyberspace and she needs to hear from you! Please e-mail the Quilt Patch if you would like to receive information through Constant Contact e-mail. In the subject line, please include what kind of information you'd like to receive: Newsletters, New Products, Fabric Line Updates, Machine Embroidery News, or Special Events. <a href="mailto:quiltpatch@vacoxmail.com?subject=Sign me up for E-Mail">Click here</a> to get started!</p>
+
+          </div>
+        </div>
+

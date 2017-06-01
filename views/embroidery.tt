@@ -1,0 +1,62 @@
+[% USE date %]
+[% calc  = date.calc %]
+        <div class="row column">
+          <div class="callout">
+            <h5>Welcome to our embroidery page!</h5> Look here for news about embroidery at the Quilt Patch, including new samples, new designs, embroidery classes, and Embroidery Club.
+          </div>
+        </div>
+
+        <div class="row column">
+          <div class="callout">
+            <h5>Get Your Embroidery Designs through the Bernina Design Studio</h5>
+            <div class="row">
+              <div class="small-12 medium-8 columns">
+                Finding your favorite embroidery designs is now as easy as 1-2-3!
+              </div>
+              <div class="small-12 medium-4 columns">
+                <img src="/images/BerninaLogoMadetoCreate200w.jpg" alt="Bernina - Made To Create">
+              </div>
+            </div>
+            <br>
+            <ol type="1">
+              <li><h6>Choose Your Design</h6>
+                  Search <a href="http://berninadesignstudio.com" target="_blank">BerninaDesignStudio.com</a> for embroidery designs -- new designs and old favorites. All available designs are there on the website, including ETO favorites and Platinum designs. New collections are introduced every month!<br><br></li>
+              <li><h6>Write Down the Numbers</h6>
+                  Write down the collection number or design number. Some designs are available in sets of 1, 5, 10, or 20. Others are available only in their original collections.<br><br></li>
+              <li><h6>Bring Us Your USB Stick</h6>
+                  Come to the Quilt Patch with your list of designs and your USB stick. Bring your own USB stick or the exclusive Bernina USB stick and we can download your choice of designs -- up to 150 designs per transaction. Then you can open them into your emboidery software, burn them to your own CD, write them to your Magic Card via the Magic Box, or connect directly to your machine! If you lose your designs, you can bring the original stick back to your dealer and download the designs again -- at no additional charge.<br>
+<br>
+Buy 10 embroidery designs from Design Studio and you get 50% off a Quilt Patch USB stick.<br>
+<br>
+Designs are downloaded to your USB stick in multi-formats that work for most machines. Download the <a href="http://www.berninausa.com/product_detail-n6-i325-sUS.html" target="_blank">free ArtLink software</a> to resize your designs, change colors, and make minor edits.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="row column">
+          <div class="callout">
+            <div class="row">
+              <div class="small-12 medium-8 columns">
+                <h5>Embroidery Blanks</h5>
+                <p>Come in and see our collection of embroidery blanks. Generally, we stock linen guest towels, table runners, slippers, aprons, book marks, and black pashminas.  These are wonderful for embroidery and other surface design techniques such as painting or felting.</p>
+                <p>The guest towels are completely finished and would be lovely with or without your embroidery. We have them in white, ecru, and oatmeal.</p>
+              </div>
+              <div class="small-12 medium-4 columns">
+                <img src="/images/GuestTowelBlank.jpg" alt="Guest Towel">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row column">
+          <div class="callout">
+
+            [% current_subgroup = '' %]
+            [% FOREACH item IN data.classes %]
+              [% PROCESS 'partials/_class_block.tt' %]
+            [% END %]
+
+          </div>
+        </div>
+
+      </div>
