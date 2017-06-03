@@ -497,14 +497,14 @@ post '/contact_us' => sub
 
 get '/links' => sub
 {
-  my @links = ();
+  my @links = $SCHEMA->resultset( 'LinkGroup' )->search( {}, { order_by => [ 'order_by' ] } );
 
   template 'links',
   {
     title => 'Links',
     data =>
     {
-      links => \@links,
+      link_groups => \@links,
     },
   };
 };

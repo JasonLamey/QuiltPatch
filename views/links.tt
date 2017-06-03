@@ -1,5 +1,19 @@
             <div class="row column">
               <div class="callout">
-                <h4>Links</h4>
+                <h4>Links to Some of our Favorite Websites</h4>
+
+                [% FOREACH lgroup IN data.link_groups %]
+                <h5>[% lgroup.name %]</h5>
+
+                [% FOREACH link IN lgroup.links %]
+                  [% IF link.show_url == 1 %]
+                  <div class="row column">[% link.name %]: <a href="[% link.url %]" target="_blank">[% link.url %]</a></div>
+                  [% ELSE %]
+                  <div class="row column"> <a href="[% link.url %]" target="_blank">[% link.name %]</a></div>
+                  [% END %]
+                [% END %]
+                <br>
+                [% END %]
+
               </div>
             </div>

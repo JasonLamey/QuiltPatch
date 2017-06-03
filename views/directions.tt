@@ -29,11 +29,11 @@
                     </div>
 
                     <div class="row">
-                      <div class="small-12 medium-8 columns">
+                      <div class="small-12 medium-7 columns">
                         <div id="dvMap">
                         </div>
                       </div>
-                      <div class="small-12 medium-4 columns">
+                      <div class="small-12 medium-5 columns">
                         <div id="dvPanel">
                         </div>
                       </div>
@@ -85,12 +85,6 @@
         marker: {
           address: qpAddress,
           title: 'The Quilt Patch'
-        },
-        infowindow: {
-          address: qpAddress,
-          options: {
-            content: "<strong>The Quilt Patch</strong><br>10381 Main Street, Fairfax, Virginia 22030"
-          }
         }
       });
 
@@ -104,6 +98,10 @@
           var start = document.getElementById('txtSource').value;
           var qpAddress = "10381 Main Street, Fairfax, Virginia 22030";
           var qpCenter = [38.845686, -77.304868];
+
+          if ( start == '' ) {
+            showError( 'You must provide a starting address to get directions.' );
+          }
 
           $('#dvMap')
           .gmap3({
