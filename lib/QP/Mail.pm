@@ -202,7 +202,13 @@ sub send_password_reset_email
 
   my $user = $SCHEMA->resultset( 'User' )->find( { email => $email } ) if defined $email;
 
-  my %return = ( success => 0, error => undef );
+  my $return = 0;
+
+  if ( ! defined $user )
+  {
+    error sprintf( 'send_password_reset_email could not find User from e-mail address: >%s<.', $email );
+    return $return;
+  }
 
   # Ensure we have the bare minimum to proceed.
   my $preflight = QP::Mail->preflight_checklist(
@@ -213,9 +219,8 @@ sub send_password_reset_email
                                                     );
   if ( ! $preflight->{'success'} )
   {
-    $return{'error'} = $preflight->{'message'};
     error sprintf( 'Preflight Checklist for email failed for %s: %s', 'Password Reset Email', $preflight->{'message'} );
-    return \%return;
+    return $return;
   }
 
   my $send_email = Emailesque->new(
@@ -246,8 +251,8 @@ sub send_password_reset_email
   );
 
   info sprintf( 'Successfully sent Password Reset Email to >%s<.', $email );
-  $return{'success'} = 1;
-  return \%return;
+  $return = 1;
+  return $return;
 }
 
 

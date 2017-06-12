@@ -1,0 +1,26 @@
+<div class="form-registration">
+
+  <h3>Sign Up</h3>
+
+  <form class="form-registration-group" action="/signup" method="post" data-abide novalidate>
+    <label>
+      <input class="form-registration-input"  type="text" placeholder="Your username" name="username" required pattern="alpha_numeric">
+      <span class="form-error">A username is required.</span>
+    </label>
+    <label>
+      <input class="form-registration-input"  type="email" placeholder="Your email" name="email" required pattern="email">
+      <span class="form-error">A valid e-mail address is required.</span>
+    </label>
+    <label>
+      <input class="form-registration-input"  type="password" placeholder="Your password" name="password" required >
+      <span class="form-error">A password is required.</span>
+    </label>
+    <label><input class="form-registration-submit-button" type="submit" value="Sign Up"></label>
+    <p class="or-divider"></p>
+    <!-- <p class="or-divider"><span>or</span></p>
+    <a class="form-registration-social-button" href="#"><i class="fa fa-facebook-official" aria-hidden="true"></i> Sign Up With facebook</a> -->
+    <p class="form-registration-member-signin">Already have an account? <a href="#login-modal" rel="modal:open">Sign in</a></p>
+    <p class="form-registration-terms"><a href="#">Terms &amp; Conditions</a>|<a href="#">Privacy</a></p>
+  </form>
+
+</div>

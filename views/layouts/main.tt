@@ -58,10 +58,16 @@
         <div class="side-menu-item"><a href="/contact_us"><i class="fa fa-paper-plane fa-fw" aria-hidden="true"></i> Contact Us</a></div>
         <div class="side-menu-item"><a href="/links"><i class="fa fa-external-link fa-fw" aria-hidden="true"></i> Links</a></div>
         <hr>
-        <div class="side-menu-item"><a href="/links"><i class="fa fa-sign-in fa-fw" aria-hidden="true"></i> Login / Sign Up</a></div>
+        [% IF session.logged_in_user %]
+          <div class="side-menu-item"><strong>Welcome back, [% session.logged_in_user %].</strong></div>
+          <div class="side-menu-item"><a href="/user"><i class="fa fa-user fa-fw" aria-hidden="true"></i> Your Account</a></div>
+          <div class="side-menu-item"><a href="/logout"><i class="fa fa-sign-out fa-fw" aria-hidden="true"></i> Logout</a></div>
+        [% ELSE %]
+          <div class="side-menu-item"><a href="#login-modal" rel="modal:open" data-modal><i class="fa fa-sign-in fa-fw" aria-hidden="true"></i> Login / Sign Up</a></div>
+        [% END %]
       </div>
 
-      <div class="content-copy off-canvas-content" data-equalizer-watch="content" data-off-canvas>
+      <div class="content-copy off-canvas-content medium-expand" data-equalizer-watch="content" data-off-canvas>
         <button type="button" class="button show-for-small-only" data-toggle="offCanvasLeft"><i class="fa fa-bars fa-fw"></i>Menu</button>
 
         [% content %]
@@ -81,7 +87,15 @@
       </div>
     </footer>
 
-    [% IF flash.error || flash.notify || flash.success %]
+    <div style="display:none;" id="login-modal">
+    [% PROCESS 'partials/_login_form.tt' %]
+    </div>
+
+    <div style="display:none;" id="signup-modal">
+    [% PROCESS 'partials/_signup_form.tt' %]
+    </div>
+
+    [% IF flash.error.defined or flash.notify.defined or flash.success.defined %]
     <script>
       $(document).ready( function () {
         [% IF flash.error %]

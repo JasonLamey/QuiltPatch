@@ -15,7 +15,7 @@ use version; our $VERSION = qv( "v0.1.0" );
 
 use QP::Schema;
 
-const my $SCHEMA => QP::Schema->get_schema_connection();
+const my $SCHEMA => QP::Schema->db_connect();
 #$SCHEMA->storage->debug(1);   # UNCOMMENT IN ORDER TO DUMP SQL DEBUG MESSAGES TO LOGS
 
 

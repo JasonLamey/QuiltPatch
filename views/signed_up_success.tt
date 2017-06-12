@@ -1,0 +1,26 @@
+      <div class="row column">
+        <div class="callout">
+
+          <div class="row align-center">
+            <div class="small-12 columns">
+              <h3>Thank you for signing up, [% data.user.username %]!</h3>
+              <h5>But, wait!  You're not done, yet.</h5>
+
+              <div class="callout primary">
+                <p>We've emailed you a confirmation message to <strong>[% data.user.email %]</strong>.
+                  In that email, there is a link you need to click to confirm your account with us. Without
+                  doing that, certain features of our website aren't available to you.</p>
+
+                <p>That email should show up within 15 minutes. If it doesn't:
+                  <ol type="1">
+                    <li>Check your spam folder to ensure that our message wasn't snared by mistake.</li>
+                    <li>Add our email address, <strong>[% data.from_address %]</strong> to your allowed emails list.</li>
+                    <li>Click the following link to <a href="/resend_confirmation">resend the confirmation email</a>.</li>
+                  </ol>
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>

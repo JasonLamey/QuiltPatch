@@ -1,0 +1,24 @@
+<div class="form-registration row column">
+
+  <h3>Log In</h3>
+
+  <form class="form-registration-group" action="/login" method="post" data-abide novalidate>
+    <label>
+      <input class="form-registration-input"  type="text" placeholder="Your username" name="username" required pattern="alpha_numeric">
+      <span class="form-error">A username is required.</span>
+    </label>
+    <label>
+      <input class="form-registration-input"  type="password" placeholder="Your password" name="password" required>
+      <span class="form-error">A password is required.</span>
+    </label>
+    <p class="form-registration-terms"><a href="/reset_password">Forgot my password</a></p>
+    <label><input type="hidden" name="return_url" value="[% request.request_uri %]"></label>
+    <label><input class="form-registration-submit-button" type="submit" value="Sign In"></label>
+    <p class="or-divider"></p>
+    <!-- <p class="or-divider"><span>or</span></p>
+    <a class="form-registration-social-button" href="#"><i class="fa fa-facebook-official" aria-hidden="true"></i> Sign In With facebook</a> -->
+    <p class="form-registration-member-signin">Need an account? <a href="#signup-modal" rel="modal:open">Sign up</a></p>
+    <p class="form-registration-terms"><a href="/terms">Terms &amp; Conditions</a>|<a href="/privacy">Privacy</a></p>
+  </form>
+
+</div>

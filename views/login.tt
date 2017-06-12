@@ -1,0 +1,5 @@
+    <div class="row column">
+      <div class="callout">
+        [% PROCESS 'partials/_login_form.tt' %]
+      </div>
+    </div>

@@ -7,7 +7,7 @@ function showSuccess( msg )
       position:  'center',
       width:     400,
       autohide:  true,
-      opacity:   0.9,
+      opacity:   1.0,
       fade:      true,
       clickable: true,
       multiline: true,
@@ -24,7 +24,7 @@ function showWarning( msg )
       position:  'center',
       width:     400,
       autohide:  false,
-      opacity:   0.9,
+      opacity:   1.0,
       fade:      true,
       multiline: true,
     }
@@ -40,7 +40,7 @@ function showError( msg )
       position:  'center',
       width:     400,
       autohide:  false,
-      opacity:   0.9,
+      opacity:   1.0,
       fade:      true,
       multiline: true,
     }
@@ -56,7 +56,7 @@ function showInfo( msg )
       position:  'center',
       width:     400,
       autohide:  false,
-      opacity:   0.9,
+      opacity:   1.0,
       fade:      true,
       multiline: true,
     }

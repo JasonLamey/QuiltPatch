@@ -1,0 +1,33 @@
+<div class="row column">
+  <div class="callout">
+
+    <div class="row align-center">
+      <div class="small-12 columns">
+        <h3>Account Confirmation</h3>
+
+        <div class="callout primary">
+          [% IF data.success %]
+          <h5>Congratulations [% data.user.username %]!</h5>
+          <p>You've confirmed your account, and as a result, you have full access to all features on our site!</p>
+          <div class="button-group text-center">
+            <a class="button" href="/user">Your Account</a>
+            <a class="button" href="/classes">Classes</a>
+          </div>
+          [% ELSE %]
+          <h5>Our Kittens Got Lost Looking Up Your Confirmation Code!</h5>
+          <p>Unfortunately, we couldn't find your confirmation code as it was provided. Please ensure that the code below
+            is correct, and resubmit it. If this problem persists, please contact us using the contact link below.</p>
+          <form method="post" action="/account_confirmation">
+            <div class="input-group">
+              <span class="input-group-label">Confirmation Code: </span>
+              <input class="input-group-field" type="text" name="ccode" value="[% data.ccode %]" size="40">
+              <div class="input-group-button"><button class="button" type="submit" value="Confirm">Confirm</button></div>
+            </div>
+          </form>
+          [% END %]
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

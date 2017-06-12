@@ -21,11 +21,6 @@ charset: "UTF-8"
 #template: "simple"
 
 template: "template_toolkit"
-engines:
-  template:
-    template_toolkit:
-      start_tag: '[%'
-      end_tag:   '%]'
 
 # session engine
 #
@@ -51,7 +46,84 @@ engines:
 #      is_secure: 1
 #      is_http_only: 1
 
+session: Cookie
+
+dbicx_sugar:
+  default:
+    dsn: 'dbi:mysql:database=quiltpatch;host=localhost'
+    schema_class: 'QP::Schema'
+    user: 'quiltpatch'
+    password: 'st1tchT1me'
+    options:
+      RaiseError: 1
+      PrintError: 1
+      AutoCommit: 1
+      ChopBlanks: 1
+      ShowErrorStatement: 1
+  quiltpatch:
+    alias: 'default'
+
 plugins:
   Flash:
     token_name: 'flash'
     session_hash_key: '_flash'
+  DBIC:
+    default:
+      dsn: 'dbi:mysql:database=quiltpatch;host=localhost'
+      schema_class: 'QP::Schema'
+      user: 'quiltpatch'
+      password: 'st1tchT1me'
+      options:
+        RaiseError: 1
+        PrintError: 1
+        AutoCommit: 1
+        ChopBlanks: 1
+        ShowErrorStatement: 1
+    quiltpatch:
+      alias: 'default'
+  Auth::Extensible:
+    disable_roles: 0
+    user_home_page: '/user'
+    exit_page: '/'
+    no_default_pages: 1
+    mail_from: '"Quilt Patch" <noreply@quiltpatchva.com>'
+    # Set to true to enable password reset code in the default handlers
+    reset_password_handler: 1
+    #password_generator: QP::Util::generate_user_pw # Optional random password generator
+    # Set to a true value to enable recording of successful last login times
+    record_lastlogin: 1
+    # Password reset functionality
+    password_reset_send_email: QP::Mail::send_password_reset_email
+    # create_user options
+    welcome_send: QP::Mail::send_welcome_email
+    record_lastlogin: 1
+    realms:
+      site:
+        provider: 'DBIC'
+        user_as_object: 1
+        schema_name: 'quiltpatch'
+        users_resultset: 'User'
+        roles_resultset: 'Role'
+        user_roles_resultset: 'UserRole'
+        users_lastlogin_column: 'lastlogin'
+        users_pwresetcode_column: 'pw_reset_code'
+        users_pwchanged_column: 'pw_changed'
+        users_username_column: 'username'
+        users_password_column: 'password'
+        roles_role_column: 'role'
+        roles_key: 'roles'
+        encryption_algorithm: 'SHA-512'
+
+engines:
+  template:
+    template_toolkit:
+      start_tag: '[%'
+      end_tag:   '%]'
+  session:
+    YAML:
+      session_dir: "./sessions"
+      cookie_duration: 3600    # Default cookie timeout in seconds, 1 hour
+      is_secure: 1
+    Cookie:
+      secret_key: 'entire works of Shakespeare'
+      default_duration: 604800
