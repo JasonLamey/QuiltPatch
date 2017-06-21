@@ -1038,6 +1038,11 @@ post '/account_confirmation' => sub
 };
 
 
+###########################################################################
+# ROUTES THAT REQUIRE THE USER BE LOGGED IN
+###########################################################################
+
+
 =head2 GET C</user>
 
 GET route for the default user home page.
@@ -1046,8 +1051,82 @@ GET route for the default user home page.
 
 get '/user' => require_login sub
 {
-  redirect '/';
+  my $user = $SCHEMA->resultset( 'User' )->find( { username => session( 'logged_in_user' ) } );
+  if ( ! defined $user or ! defined $user->id )
+  {
+    warning 'Invalid username supplied to find User account in user dashboard.';
+  }
+
+  template 'user_dashboard',
+  {
+    data =>
+    {
+      user => $user,
+    }
+  };
 };
 
+
+=head2 GET C</user/account>
+
+GET route for User Account management.
+
+=cut
+
+get '/user/account' => require_login sub
+{
+  my $user = $SCHEMA->resultset( 'User' )->find( { username => session( 'logged_in_user' ) } );
+  if ( ! defined $user or ! defined $user->id )
+  {
+    warning 'Invalid username supplied to find User account in user account mgmt dashboard.';
+  }
+
+  template 'user_account_mgmt',
+  {
+    data =>
+    {
+      user => $user,
+    }
+  }
+};
+
+
+=head2 POST C</user/account>
+
+POST route for updating and saving User account data.
+
+=cut
+
+post '/user/account' => require_login sub
+{
+  my $user = $SCHEMA->resultset( 'User' )->find( { username => session( 'logged_in_user' ) } );
+  if ( ! defined $user or ! defined $user->id )
+  {
+    warning 'Invalid username supplied to find User account in user account mgmt submit.';
+    flash( error => 'An error occurred. Your information was not saved. Please try again.' );
+    redirect '/user/account';
+  }
+
+  $user->username(
+    ( body_parameters->get('username') ) ? body_parameters->get( 'username' ) : $user->username
+  );
+  $user->first_name(
+    ( body_parameters->get('first_name') ) ? body_parameters->get( 'first_name' ) : undef
+  );
+  $user->last_name(
+    ( body_parameters->get('last_name') ) ? body_parameters->get( 'last_name' ) : undef
+  );
+  $user->birthdate(
+    ( body_parameters->get('birthdate') ) ? body_parameters->get( 'birthdate' ) : undef
+  );
+  $user->email(
+    ( body_parameters->get('email') ) ? body_parameters->get( 'email' ) : $user->email
+  );
+
+  $user->update();
+
+  flash( success => 'Your changes have been saved!' );
+  redirect '/user/account';
+};
 
 true;

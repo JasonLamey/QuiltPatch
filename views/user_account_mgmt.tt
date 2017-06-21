@@ -1,0 +1,38 @@
+[% USE date %]
+            [% PROCESS 'partials/_user_dashboard_nav.tt' %]
+
+            <div class="row column">
+              <div class="callout">
+                <h3>Your Account</h3>
+
+                <div class="row column">
+                  <form method="post" action="/user/account" data-abide novalidate>
+
+                    <label for="username">Username: <i class="fa fa-fw fa-asterisk"></i>
+                      <input type="text" name="username" maxlength="40" placeholder="Username" value="[% data.user.username %]" required pattern="alpha_numeric">
+                      <span class="form-error">Your username is required, and should only contain numbers, letters, underscore (_) and hyphen (-).</span>
+                    </label>
+
+                    <label for "first_name">First Name:
+                      <input type="text" name="first_name" maxlength="255" placeholder="Jane" value="[% data.user.first_name %]">
+                    </label>
+
+                    <label for "last_name">Last Name:
+                      <input type="text" name="last_name" maxlength="255" placeholder="Doe" value="[% data.user.last_name %]">
+                    </label>
+
+                    <label for "birthdate">Birthdate:
+                      <input type="date" name="birthdate" placeholder="YYYY-MM-DD" value="[% data.user.birthdate %]">
+                    </label>
+
+                    <label for "email">Email: <i class="fa fa-fw fa-asterisk"></i>
+                      <input type="email" name="email" placeholder="janedoe@example.com" value="[% data.user.email %]" required pattern="email">
+                    </label>
+
+                    <button type="submit" class="button">Save Changes</button>
+
+                  </form>
+                </div>
+
+              </div>
+            </div>
