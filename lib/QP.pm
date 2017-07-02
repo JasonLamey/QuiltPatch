@@ -29,6 +29,13 @@ const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensib
 
 $SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
 
+
+=head2 GET C</>
+
+Route to get to the default page.
+
+=cut
+
 get '/' => sub {
   my $today = DateTime->today( time_zone => 'America/New_York' );
   my @news = $SCHEMA->resultset( 'News' )->search(
@@ -96,11 +103,25 @@ get '/' => sub {
             };
 };
 
+
+=head2 GET C</calendar>
+
+Route to get the default calendar page.
+
+=cut
+
 get '/calendar' => sub
 {
   template 'calendar',
     { title => 'Events Calendar' };
 };
+
+
+=head2 ANY C</get_events/:event_type>
+
+Route to fetch events for the calendar. AJAX transaction.
+
+=cut
 
 any '/get_events/?:event_type?' => sub
 {
@@ -175,6 +196,13 @@ any '/get_events/?:event_type?' => sub
   return to_json( \@json_events );
 };
 
+
+=head2 GET C</news/:news_type/:news_id>
+
+Route to fetch a single news article.
+
+=cut
+
 get '/news/:news_type/:news_id' => sub
 {
   my $news_type = route_parameters->get( 'news_type' ) // 'QP'; # QP or Bernina
@@ -202,6 +230,13 @@ get '/news/:news_type/:news_id' => sub
   };
 };
 
+
+=head2 GET C</news/:news_type>
+
+Route to fetch a news feed for a particular news type.
+
+=cut
+
 get '/news/?:news_type?' => sub
 {
   my $news_type = route_parameters->get( 'news_type' ) // 'QP'; # QP or Bernina
@@ -225,6 +260,49 @@ get '/news/?:news_type?' => sub
     }
   };
 };
+
+
+=head2 GET C</classes/by_teacher>
+
+Route to list all classes sorted by teacher.
+
+=cut
+
+get '/classes/by_teacher' => sub
+{
+  my @teachers = $SCHEMA->resultset( 'Teacher' )->search( {},
+                                                          {
+                                                            select   =>
+                                                            [
+                                                              'id',
+                                                              'name',
+                                                              { SUBSTRING_INDEX => [ 'me.name', "' '", -1 ], -as => 'last_name' },
+                                                              { SUBSTRING_INDEX => [ 'me.name', "' '", 1 ], -as => 'first_name' },
+                                                            ],
+                                                            prefetch => [ 'classes', 'classes2', 'classes3' ],
+                                                            order_by =>
+                                                            {
+                                                              -asc => [ 'last_name, first_name' ],
+                                                            },
+                                                          }
+  );
+
+  template 'classes_by_teacher',
+  {
+    title => 'Classes | Listed By Teacher',
+    data  =>
+    {
+      teachers => \@teachers,
+    }
+  };
+};
+
+
+=head2 GET C</classes/:group_id>
+
+Route to fetch classes for a particular class group.
+
+=cut
 
 get '/classes/:group_id' => sub
 {
@@ -300,6 +378,13 @@ get '/classes/:group_id' => sub
   };
 };
 
+
+=head2 GET C</classes>
+
+Route to fetch default classes landing page.
+
+=cut
+
 get '/classes' => sub
 {
   template 'classes',
@@ -308,9 +393,29 @@ get '/classes' => sub
   };
 };
 
+
+=head2 GET C</clubs>
+
+Route to fetch clubs landing page.
+
+=cut
+
 get '/clubs' => sub
 {
   my $today   = DateTime->today( time_zone => 'America/New_York' );
+
+  my @book_club_dates = $SCHEMA->resultset( 'BookClubDate' )->search(
+                                                      {
+                                                        date => { '>=' => $today->ymd },
+                                                      },
+                                                      {
+                                                        order_by =>
+                                                        {
+                                                          -asc => [ 'date', 'book' ],
+                                                        }
+                                                      },
+  );
+
   my @classes = $SCHEMA->resultset( 'Class' )->search(
                                                       {
                                                         is_also_club => 1,
@@ -333,10 +438,18 @@ get '/clubs' => sub
     title => 'Clubs',
     data =>
     {
-      classes => \@classes,
+      classes         => \@classes,
+      book_club_dates => \@book_club_dates,
     },
   };
 };
+
+
+=head2 GET C</embroidery>
+
+Route to fetch the embroidery landing page.
+
+=cut
 
 get '/embroidery' => sub
 {
@@ -367,6 +480,13 @@ get '/embroidery' => sub
     },
   };
 };
+
+
+=head2 POST C</search>
+
+Route to submit a search query, and return a result.
+
+=cut
 
 post '/search' => sub
 {
@@ -409,6 +529,13 @@ post '/search' => sub
   };
 };
 
+
+=head2 GET C</services>
+
+Route to display the services page.
+
+=cut
+
 get '/services' => sub
 {
   template 'services',
@@ -416,6 +543,13 @@ get '/services' => sub
     title => 'Services',
   };
 };
+
+
+=head2 GET C</contact_us>
+
+Route to reach the contact us form page.
+
+=cut
 
 get '/contact_us' => sub
 {
@@ -439,6 +573,13 @@ get '/contact_us' => sub
     },
   };
 };
+
+
+=head2 POST C</contact_us>
+
+Route to submit contact us info for mailing.
+
+=cut
 
 post '/contact_us' => sub
 {
@@ -504,6 +645,13 @@ post '/contact_us' => sub
   redirect '/contact_us';
 };
 
+
+=head2 GET C</links>
+
+Route to fetch links.
+
+=cut
+
 get '/links' => sub
 {
   my @links = $SCHEMA->resultset( 'LinkGroup' )->search( {}, { order_by => [ 'order_by' ] } );
@@ -517,6 +665,13 @@ get '/links' => sub
     },
   };
 };
+
+
+=head2 GET C</directions>
+
+Route to display directions and map to the store.
+
+=cut
 
 get '/directions' => sub
 {

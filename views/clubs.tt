@@ -3,6 +3,7 @@
         <div class="row column">
           <div class="callout">
             <h4>Book Club</h4>
+            [% PROCESS 'partials/_book_club_block.tt' %]
           </div>
         </div>
 

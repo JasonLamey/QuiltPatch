@@ -41,7 +41,7 @@
                     [% item.skill_level %]
                   </div>
                   <div class="small-6 medium-5 columns">
-                    [% IF item.teacher.defined %]Instructor, <a href="/classes/by_teacher/[% item.teacher_id %]">[% item.teacher.name %]</a>[% IF item.teacher2.defined %], <a href="/classes/by_teacher/[% item.secondary_teacher_id %]">[% item.teacher2.name %]</a>[% IF item.teacher3.defined %], <a href="/classses/by_teacher/[% item.tertiary_teacher_id %]">[% item.teacher3.name %]</a>[% END %][% END %][% END %]
+                    [% IF item.teacher.defined %]Instructor, <a href="/classes/by_teacher#[% item.teacher_id %]">[% item.teacher.name %]</a>[% IF item.teacher2.defined %], <a href="/classes/by_teacher#[% item.secondary_teacher_id %]">[% item.teacher2.name %]</a>[% IF item.teacher3.defined %], <a href="/classses/by_teacher#[% item.tertiary_teacher_id %]">[% item.teacher3.name %]</a>[% END %][% END %][% END %]
                   </div>
                 </div>
 
@@ -57,18 +57,30 @@
             %]
             [%
                 FOREACH dateitem IN item.dates;
-                  dateitem.date = dateitem.date.replace( '-', '/' );
-                  dateitem.date = dateitem.date _ ' 00:00:00';
-
-                  dyear = date.format( dateitem.date, '%Y' );
-                  dmon  = date.format( dateitem.date, '%m' );
-                  dday  = date.format( dateitem.date, '%d' );
+                  dyear = date.format( dateitem.date _ ' 00:00:00', '%Y' );
+                  dmon  = date.format( dateitem.date _ ' 00:00:00', '%m' );
+                  dday  = date.format( dateitem.date _ ' 00:00:00', '%d' );
 
                   NEXT IF calc.Delta_Days( tyear, tmon, tday, dyear, dmon, dday ) < 0;
 
-                  date_group_order = 0;
-                  IF dateitem.date_group_order.defined && dateitem.date_group_order != '';
-                    date_group_order = dateitem.date_group_order;
+                  this_itemdate = {
+                    date             => dateitem.date _ ' 00:00:00',
+                    start_time1      => dateitem.start_time1,
+                    end_time1        => dateitem.end_time1,
+                    session          => dateitem.session,
+                    date_group       => dateitem.date_group,
+                    date_group_order => dateitem.date_group_order,
+                    is_holiday       => dateitem.is_holiday,
+                  };
+
+                  IF dateitem.start_time2.defined && dateitem.start_time2 != '';
+                    this_itemdate.start_time2 = dateitem.start_time2;
+                    this_itemdate.end_time2   = dateitem.end_time2;
+                  END;
+
+                  date_group_order = 1;
+                  IF this_itemdate.date_group_order.defined && this_itemdate.date_group_order != '';
+                    date_group_order = this_itemdate.date_group_order;
                   END;
 
                   dow = calc.Day_of_Week( dyear, dmon, dday );
@@ -82,7 +94,7 @@
                   IF ! dates.$date_group_order.$dow.defined;
                     dates.$date_group_order.$dow = [];
                   END;
-                  dates.$date_group_order.$dow.push( dateitem );
+                  dates.$date_group_order.$dow.push( this_itemdate );
 
                 END;
             %]
@@ -102,7 +114,7 @@
                     date_list = '';
                     date_list_array = [];
 
-                    FOREACH datehash IN dates.$dategroup.$weekday.nsort;
+                    FOREACH datehash IN dates.$dategroup.$weekday.sort('date');
 
                       year_string = '';
                       this_year = date.format( datehash.date, '%Y' );

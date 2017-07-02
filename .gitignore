@@ -21,4 +21,4 @@ nytprof.out
 *.dancer
 /src
 *.swp
-
+/logs

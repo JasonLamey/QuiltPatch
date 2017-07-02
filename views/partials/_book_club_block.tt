@@ -1,0 +1,19 @@
+[% USE date %]
+
+<p>Our book club meets upstairs at The Quilt Patch the last Thursday each month at 7:30pm. Selections for the coming months are:</p>
+
+<ul>
+[% last_date = '' %]
+[% FOREACH bc_date IN data.book_club_dates %]
+  [% IF last_date == bc_date %]
+    and
+  [% ELSE %]
+    [% IF last_date != '' %]</li>[% END %]
+  <li>
+  [% END %]
+  [% date.format( bc_date.date _ ' 00:00:00', '%B %d, %Y' ) %]: <em>[% bc_date.book %]</em> by [% bc_date.author %]
+  [% last_date = bc_date.date %]
+[% END %]
+</ul>
+
+<p>If you are new to Book Club, please send us your email address so we can add you to our communication list. Send your email address with &quot;book club&quot; in the subject line to <a href="mailto:quiltpatch@vacoxmail.com?subject=Book Club">quiltpatch@vacoxmail.com</a>. Please join us!</p>

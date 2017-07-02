@@ -1,0 +1,58 @@
+[% USE Math %]
+[% USE date; calc = date.calc; %]
+<div class="row column">
+  <div class="callout">
+
+    <h3>Classes - Listed By Teacher</h3>
+
+    <p>Use this list to find classes with your favorite teachers or just as an overview of what we're offering this session. Want more information about any particular class? Click on the class name and go to the class page.</p>
+
+  </div>
+</div>
+
+[% teachercount = 0 %][% passed_half = 0 %]
+[% teacher_half = Math.int( data.teachers.size / 2 ) %]
+[% tyear = date.format( date.now, '%Y' ); tmon = date.format( date.now, '%m' ); tday = date.format( date.now, '%d' ); %]
+<div class="row">
+  <div class="small-6 columns">
+    <div class="callout">
+
+    [% FOREACH teacher IN data.teachers %]
+      [% IF teachercount == teacher_half %]
+
+    </div>
+  </div>
+
+  <div class="small-6 columns">
+    <div class="callout">
+
+      [% END %]
+    <a name="[% teacher.id %]" id="[% teacher.id %]"></a>
+    <h4>[% teacher.name %]</h4>
+
+    [% myclasses = teacher.classes.merge( teacher.classes2, teacher.classes3 ) %]
+    [% classes_shown = 0 %]
+    <ul>
+      [% FOREACH class IN myclasses.sort( 'title' ) %]
+        [% mydates = class.dates; show_class = 0; %]
+        [% FOREACH mydate IN mydates %]
+          [% myyear = date.format( mydate.date _ ' 00:00:00', '%Y' );
+             mymon = date.format( mydate.date _ ' 00:00:00', '%m' );
+             myday = date.format( mydate.date _ ' 00:00:00', '%d' ); %]
+          [% NEXT IF calc.Delta_Days( tyear, tmon, tday, myyear, mymon, myday ) < 0 %]
+          [% show_class = 1; LAST; %]
+        [% END %]
+        [% IF show_class == 1 %]
+      <li><a href="/classes/[% class.class_group_id %]#[% class.id %]">[% class.title %]</a></li>
+          [% classes_shown = classes_shown + 1 %]
+        [% END %]
+      [% END %]
+      [% IF classes_shown == 0 %]<li>No current or upcoming classes at this time</li>[% END %]
+    </ul>
+
+      [% teachercount = teachercount + 1 %]
+    [% END %]
+
+    </div>
+  </div>
+</div>
