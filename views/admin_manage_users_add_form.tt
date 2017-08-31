@@ -1,111 +1,114 @@
 [% PROCESS 'partials/_breadcrumbs.tt' %]
 
 <div class="row column">
-  <h2>Create User Account</h2>
-</div>
+  <div class="callout">
+    <h2>Create User Account</h2>
 
-<div class="row align-center">
-  <div class="small-12 medium-8 columns">
-    <form action="/admin/manage_users/create" method="post" id="add_user_account_form">
+    <div class="row align-center">
+      <div class="small-12 medium-8 columns">
+        <form action="/admin/manage_users/create" method="post" id="add_user_account_form">
 
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="username" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Username:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="text" maxlength="50" name="username" placeholder="joe_user"
-            data-validation="required length" data-validation-length="3-50"
-            data-validation-error-msg-length="Username must be between 3 and 50 characters."
-            data-validation-error-msg="Account requires a Username.">
-        </div>
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="username" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Username:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="text" maxlength="50" name="username" placeholder="joe_user"
+                data-validation="required length" data-validation-length="3-50"
+                data-validation-error-msg-length="Username must be between 3 and 50 characters."
+                data-validation-error-msg="Account requires a Username.">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="password" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Password:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="password" maxlength="140" name="password" placeholder="password1234"
+                data-validation="required length" data-validation-length="3-40"
+                data-validation-error-msg-length="Password must be between 3 and 40 characters."
+                data-validation-error-msg="Password is required.">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="birthdate" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Birthdate:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="text" name="birthdate" id="birthdate" placeholder="YYYY-MM-DD"
+                data-validation="required birthdate" data-validation-format="yyyy-mm-dd"
+                data-validation-error-msg-birthdate="Birthdate must be in YYYY-MM-DD format."
+                data-validation-error-msg="Birthdate is required.">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="email" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Email:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="text" maxlength="255" name="email" placeholder="joe_user@example.com"
+                data-validation="required email"
+                data-validation-error-msg="A valid email address is required.">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="first_name" class="text-right middle">First Name:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="text" maxlength="255" name="first_name" placeholder="Joe"
+                data-validation="length" data-validation-length="3-255"
+                data-validation-error-msg-length="First name must be between 3 and 255 characters."
+                data-validation-optional='true'>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="last_name" class="text-right middle">Last Name:</label>
+            </div>
+            <div class="small-6 medium-8 columns">
+              <input type="text" maxlength="255" name="last_name" placeholder="User"
+                data-validation="length" data-validation-length="3-255"
+                data-validation-error-msg-length="Last name must be between 3 and 255 characters."
+                data-validation-optional='true'>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="confirmed" class="text-right middle">Account Confirmed:</label>
+            </div>
+            <div class="small-6 medium-8 columns align-middle">
+              <input type="checkbox" name="confirmed" value="1"> <span class="subtle_text">(Check this to skip account confirmation.)
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="userroles" class="text-right middle">User Roles:</label>
+            </div>
+            <div class="small-6 medium-8 columns align-middle">
+              <fieldset>
+              [% FOREACH urole IN data.roles %][% IF urole.role != 'Confirmed' && urole.role != 'Unconfirmed' %]
+                <nobr><input type="checkbox" name="userroles" id="urole-[% urole.id %]" value="[% urole.id %]"> <label for="urole-[% urole.id %]">[% urole.role %]</label></nobr>
+              [% END %][% END %]
+              </fieldset>
+            </div>
+          </div>
+
+          <div class="row column text-center">
+            <button type="submit" class="button" form="add_user_account_form">Create Account</button>
+          </div>
+
+        </form>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="password" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Password:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="password" maxlength="140" name="password" placeholder="password1234"
-            data-validation="required length" data-validation-length="3-40"
-            data-validation-error-msg-length="Password must be between 3 and 40 characters."
-            data-validation-error-msg="Password is required.">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="birthdate" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Birthdate:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="text" name="birthdate" id="birthdate" placeholder="YYYY-MM-DD"
-            data-validation="required birthdate" data-validation-format="yyyy-mm-dd"
-            data-validation-error-msg-birthdate="Birthdate must be in YYYY-MM-DD format."
-            data-validation-error-msg="Birthdate is required.">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="email" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Email:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="text" maxlength="255" name="email" placeholder="joe_user@example.com"
-            data-validation="required email"
-            data-validation-error-msg="A valid email address is required.">
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="first_name" class="text-right middle">First Name:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="text" maxlength="255" name="first_name" placeholder="Joe"
-            data-validation="length" data-validation-length="3-255"
-            data-validation-error-msg-length="First name must be between 3 and 255 characters."
-            data-validation-optional='true'>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="last_name" class="text-right middle">Last Name:</label>
-        </div>
-        <div class="small-6 medium-8 columns">
-          <input type="text" maxlength="255" name="last_name" placeholder="User"
-            data-validation="length" data-validation-length="3-255"
-            data-validation-error-msg-length="Last name must be between 3 and 255 characters."
-            data-validation-optional='true'>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="confirmed" class="text-right middle">Account Confirmed:</label>
-        </div>
-        <div class="small-6 medium-8 columns align-middle">
-          <input type="checkbox" name="confirmed" value="1"> <span class="subtle_text">(Check this to skip account confirmation.)
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="small-6 medium-4 columns">
-          <label for="userroles" class="text-right middle">User Roles:</label>
-        </div>
-        <div class="small-6 medium-8 columns align-middle">
-          <fieldset>
-          [% FOREACH urole IN data.roles %][% IF urole.role != 'Confirmed' && urole.role != 'Unconfirmed' %]
-            <nobr><input type="checkbox" name="userroles" id="urole-[% urole.id %]" value="[% urole.id %]"> <label for="urole-[% urole.id %]">[% urole.role %]</label></nobr>
-          [% END %][% END %]
-          </fieldset>
-        </div>
-      </div>
-
-      <div class="row column text-center">
-        <button type="submit" class="button" form="add_user_account_form">Create Account</button>
-      </div>
-
-    </form>
   </div>
 </div>
 

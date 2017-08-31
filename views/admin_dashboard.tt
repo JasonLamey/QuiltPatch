@@ -14,8 +14,8 @@
                 <ul>
                   <li><a href="/admin/manage_news">Manage News</a></li>
                   <li><a href="/admin/manage_events">Manage Calendar Events</a></li>
-                  <li><a href="/admin/admin_logs">Admin Logs</a></li>
-                  <li><a href="/admin/user_logs">User Logs</a></li>
+                  <li><a href="/admin/manage_newsletter">Manage Leslie's Letter</a></li>
+                  <li><a href="/admin/manage_book_club">Manage Book Club</a></li>
                 </ul>
               </div>
             </div>
@@ -31,7 +31,7 @@
                   <li><a href="/admin/manage_classes/groups">Manage Class Groups</a></li>
                   <li><a href="/admin/manage_classes/subgroups">Manage Class Subgroups</a></li>
                   <li>Manage Classes</li>
-                  <li>Manage Teachers</li>
+                  <li><a href="/admin/manage_classes/teachers">Manage Teachers</a></li>
                 </ul>
               </div>
             </div>
@@ -46,6 +46,20 @@
                 <ul>
                   <li><a href="/admin/manage_users">Manage User Accounts</a></li>
                   <li><a href="/admin/manage_roles">Manage User Roles</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="small-12 medium-6 large-4 columns">
+            <div class="card">
+              <div class="card-divider">
+                <h5>Logs</h5>
+              </div>
+              <div class="card-section">
+                <ul>
+                  <li><a href="/admin/admin_logs">Admin Logs</a></li>
+                  <li><a href="/admin/user_logs">User Logs</a></li>
                 </ul>
               </div>
             </div>

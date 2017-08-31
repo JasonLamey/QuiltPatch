@@ -1,0 +1,14 @@
+<h5>Edit Teacher - [% data.teacher.name %]</h5>
+
+<form method="post" action="/admin/manage_classes/teachers/[% data.teacher.id %]/update">
+<div class="row">
+  <div class="small-12 medium-6 columns">
+    <label for="teacher">Teacher Name:
+      <input type="text" name="name" value="[% data.teacher.name %]" placeholder="Teacher Name">
+    </label>
+  </div>
+  <div class="small-12 medium-6 columns align-self-bottom">
+    <button class="button" type="submit">Save</button>
+  </div>
+</div>
+</form>

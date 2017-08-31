@@ -1781,7 +1781,7 @@ get '/admin/manage_classes/subgroups/:subgroup_id/delete' => require_role Admin 
   )
   {
     flash( error => 'Error: Cannot delete class subgroup - Invalid or unknown ID.' );
-    redirect '/admin/manage_classes/groups';
+    redirect '/admin/manage_classes/subgroups';
   }
 
   $subgroup->delete;
@@ -1795,6 +1795,215 @@ get '/admin/manage_classes/subgroups/:subgroup_id/delete' => require_role Admin 
     log_message => sprintf( 'Class subgroup &quot;%s&quot; deleted', $subgroup_name ),
   );
   redirect '/admin/manage_classes/subgroups';
+};
+
+
+=head2 GET C</admin/manage_classes/teachers>
+
+Route to Class Teachers  management dashboard. Requires being logged in and of admin role.
+
+=cut
+
+get '/admin/manage_classes/teachers' => require_role Admin => sub
+{
+  my @teachers = $SCHEMA->resultset( 'Teacher' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_class_teachers',
+  {
+    data =>
+    {
+      teachers => \@teachers,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Teachers', current => 1 },
+    ],
+    title => 'Manage Teachers',
+  };
+};
+
+
+=head2 GET C</admin/manage_classes/teachers/add>
+
+Route to add new class teacher form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_classes/teachers/add' => require_role Admin => sub
+{
+  template 'admin_manage_classes_teachers_add_form',
+      {
+        data =>
+        {
+        },
+        title => 'Add Teacher',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_classes/teachers/create>
+
+Route to save new class teacher data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_classes/teachers/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $new_teacher = $SCHEMA->resultset( 'Teacher' )->create(
+    {
+      name => body_parameters->get( 'name' ),
+    }
+  );
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new class teacher >%s<, ID: >%s<, on %s', body_parameters->get( 'name' ), $new_teacher->id, $now );
+
+  flash success => sprintf( 'Successfully created Teacher &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'name' ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new class teacher<br>%s', join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_classes/teachers';
+};
+
+
+=head2 AJAX C</admin/manage_classes/teachers/:teacher_id/edit>
+
+Route for presenting the edit class subgroup form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/teachers/:teacher_id/edit' => require_role Admin => sub
+{
+  my $teacher_id = route_parameters->get( 'teacher_id' );
+
+  my $teacher = $SCHEMA->resultset( 'Teacher' )->find( $teacher_id );
+
+  template 'admin_manage_classes_teachers_edit_form',
+      {
+        data =>
+        {
+          teacher => $teacher,
+        },
+        title => 'Edit Teacher',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_classes/teachers/:teacher_id/update>
+
+Route to send form data to for updating a class teacher in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_classes/teachers/:teacher_id/update' => require_role Admin => sub
+{
+  my $teacher_id = route_parameters->get( 'teacher_id' );
+
+  my $teacher      = $SCHEMA->resultset( 'Teacher' )->find( $teacher_id );
+  my $orig_teacher = Clone::clone( $teacher );
+
+  if
+  (
+    not defined $teacher
+    or
+    ref( $teacher ) ne 'QP::Schema::Result::Teacher'
+  )
+  {
+    flash( error => 'Error: Cannot update teacher - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/teachers';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $teacher->name( body_parameters->get( 'name' ) );
+
+  $teacher->update();
+
+  info sprintf( 'Class teacher >%s< updated by %s on %s.', $teacher->name, logged_in_user->username, $now );
+
+  my $old =
+  {
+    name => $orig_teacher->name,
+  };
+  my $new =
+  {
+    name => body_parameters->get( 'name' ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Teacher modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated teacher &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'name' ) ) );
+  redirect '/admin/manage_classes/teachers';
+};
+
+
+=head2 GET C</admin/manage_classes/teachers/:teacher_id/delete>
+
+Route to delete a class teacher. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/teachers/:teacher_id/delete' => require_role Admin => sub
+{
+  my $teacher_id = route_parameters->get( 'teacher_id' );
+
+  my $teacher = $SCHEMA->resultset( 'Teacher' )->find( $teacher_id );
+  my $teacher_name = $teacher->name;
+
+  if
+  (
+    not defined $teacher
+    or
+    ref( $teacher ) ne 'QP::Schema::Result::Teacher'
+  )
+  {
+    flash( error => 'Error: Cannot delete teacher - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/teachers';
+  }
+
+  $teacher->delete;
+
+  flash success => sprintf( 'Successfully deleted Teacher <strong>%s</strong>.', $teacher_name );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class teacher &quot;%s&quot; deleted', $teacher_name ),
+  );
+  redirect '/admin/manage_classes/teachers';
 };
 
 

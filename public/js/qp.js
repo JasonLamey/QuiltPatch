@@ -67,9 +67,9 @@ function promptForDelete( item, url )
 {
   Ply.dialog( 'confirm',
     {
-      effect : "3d-flip" // fade, scale, fall, slide, 3d-flip, 3d-sign
+      effect : "3d-flip[180,-180]" // fade, scale, fall, slide, 3d-flip, 3d-sign
     },
-    'Are you sure you want to delete >' + item + '<?'
+    'Are you sure you want to delete "' + item + '"?'
   )
   .always( function(ui)
     {

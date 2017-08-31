@@ -154,7 +154,7 @@ sub full_name
 {
   my ( $self ) = @_;
 
-  return join( ' ', $self->first_name, $self->last_name );
+  return join( ' ', ( $self->first_name ? $self->first_name : '' ), ( $self->last_name ? $self->last_name : '' ) );
 }
 
 

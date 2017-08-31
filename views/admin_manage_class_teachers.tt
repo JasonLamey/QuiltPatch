@@ -1,0 +1,25 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h3>Manage Teachers</h3>
+
+    <div class="row column">
+      <a href="/admin/manage_classes/teachers/add" class="button notice" rel="modal:open">Create New Teacher</a>
+    </div>
+
+    [% FOREACH teacher IN data.teachers %]
+    <div class="row">
+      <div class="small-6 columns">
+      [% teacher.name %]
+      </div>
+      <div class="small-6 columns">
+        <a href="/admin/manage_classes/teachers/[% teacher.id %]/edit" class="button tiny notice" rel="modal:open">Edit</a>
+        <button class="button tiny alert" onclick="promptForDelete( '[% teacher.name %]', '/admin/manage_classes/teachers/[% teacher.id %]/delete' );">Delete</button>
+      </div>
+    </div>
+    [% END %]
+  </div>
+</div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/Sortable/1.6.0/Sortable.min.js"></script>
