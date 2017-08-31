@@ -1,0 +1,31 @@
+<h5>Edit Subgroup - [% data.subgroup.subgroup %]</h5>
+
+<form method="post" action="/admin/manage_classes/subgroups/[% data.subgroup.id %]/update">
+<div class="row">
+  <div class="small-12 medium-5 columns">
+    <label for="class_group_id">Parent Class Group:
+      <select name="class_group_id">
+        <option value=''>Select Class Group</option>
+        [% FOREACH group IN data.groups %]
+        <option value='[% group.id %]'[% IF group.id == data.subgroup.class_group_id %] selected[% END %]>[% group.name %]</option>
+        [% END %]
+      </select>
+    </label>
+  </div>
+  <div class="small-12 medium-5 columns">
+    <label for="subgroup">Subgroup Name:
+      <input type="text" name="subgroup" value="[% data.subgroup.subgroup %]" placeholder="Subgroup Name">
+    </label>
+  </div>
+  <div class="small-12 medium-2 columns">
+    <label for="order_by">Sort Order:
+      <input type="number" name="order_by" value="[% data.subgroup.order_by %]" placeholder="1">
+    </label>
+  </div>
+</div>
+<div class="row">
+  <div class="small-12 columns">
+    <button class="button" type="submit">Save</button>
+  </div>
+</div>
+</form>

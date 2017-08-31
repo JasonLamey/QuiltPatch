@@ -1,0 +1,43 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  [% PROCESS '_admin_edit_product_form.tt' %]
+</div>
+
+<div class="row column">
+  <h4>Product Images</h4>
+</div>
+[% IF data.product.images %]
+<form method="post" action="/admin/manage_products/[% data.product.id %]/images/update" id='update_images_form'>
+  <div class="row small-up-2 medium-up-4">
+    [% FOREACH image IN data.product.images %]
+    <div class="column text-center">
+      <a href="/images/products/[% data.product.id %]/[% image.filename %]" data-lightbox="product_[% data.product.id %]">
+        <img class="thumbnail" src="/images/products/[% data.product.id %]/m-[% image.filename %]">
+      </a>
+      <div class="row align-center">
+        <div class="small-6 columns text-right">
+          <small>Highlight:</small>
+        </div>
+        <div class="small-6 columns">
+          <div class="switch tiny">
+            <input class="switch-input" type="radio" name="highlight" id="radioSwitch[% image.id %]" value="[% image.id %]" [% IF image.highlight %] checked[% END %]>
+            <label class="switch-paddle" for="radioSwitch[% image.id %]">
+              <span class="show-for-sr">[% image.filename %]</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    [% END %]
+  </div>
+  <div class="row column text-center">
+    <button type="submit" class="button small" form="update_images_form">Update Images</button>
+  </div>
+</form>
+[% END %]
+<div class="row column">
+  <h4>Upload New Images</h4>
+  <div id="fine-uploader-gallery"></div>
+</div>
+[% PROCESS '_js_fineuploader.tt' %]

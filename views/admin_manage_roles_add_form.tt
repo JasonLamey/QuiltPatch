@@ -1,0 +1,31 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <h2>Add New User Role</h2>
+</div>
+
+<div class="row">
+  <div class="small-12 medium-8 columns">
+    <form method="post" action="/admin/manage_roles/create" id="add_role_form">
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="role" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Role Name:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" name="role" placeholder="Moderator"
+            data-validation="required" data-validation-error-msg="A name for the User Role is required.">
+        </div>
+      </div>
+
+      <div class="row column text-center">
+        <button type="submit" form="add_role_form" class="button">Create Role</button>
+      </div>
+
+    </form>
+    <script>
+      $.validate();
+    </script>
+  </div>
+</div>

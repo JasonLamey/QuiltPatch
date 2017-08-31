@@ -1,0 +1,122 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+<script type="text/javascript" src="/assets/js/vendor/sortable/sorttable.js"></script>
+<div class="row column">
+  <h2>Manage Product Categories and Subcategories</h2>
+</div>
+<div class="row">
+  <div class="small-12 medium-6 columns">
+    <h4>New Product Category</h4>
+    <form action="/admin/manage_product_categories/add" method="post" id="admin_new_category_form">
+      <div class="row">
+        <div class="small-3 medium-4 columns align-left middle">
+          <label for="category">New Category:</label>
+        </div>
+        <div class="small-9 medium-8 columns">
+          <input type="text" name="category" placeholder="Tabletop Games" value="" data-validation="required" data-validation-error-msg="You need to provide a category name.">
+        </div>
+        <div class="small-3 medium-4 columns align-left middle">
+          <label for="shorthand">Shorthand:</label>
+        </div>
+        <div class="small-9 medium-8 columns">
+          <input type="text" name="shorthand" placeholder="tabletop" value="" data-validation="required alphanumeric" data-validation-error-msg="You need to provide a shorthand name for use in URLs. No spaces.">
+        </div>
+      </div>
+      <div class="row column">
+        <button type="submit" class="button" value="Save Category">Save Category</button>
+      </div>
+    </form>
+  </div>
+  <div class="small-12 medium-6 columns">
+    <h4>New Product Subcategory</h4>
+    <form action="/admin/manage_product_categories/subcategory/add" method="post" id="admin_new_subcategory_form">
+      <div class="row">
+        <div class="small-3 medium-4 columns align-left middle">
+          <label for="subcategory">New Subcategory:</label>
+        </div>
+        <div class="small-9 medium-8 columns">
+          <input type="text" name="subcategory" placeholder="Punchbuggy" value="" data-validation="required" data-validation-error-msg="You need to provide a subcategory name.">
+        </div>
+      </div>
+      <div class="row">
+        <div class="small-3 medium-4 columns align-left middle">
+          <label for="category_id">In Category:</label>
+        </div>
+        <div class="small-9 medium-8 columns">
+          <select name="category_id" data-validation="required" data-validation-error-msg="You need to choose a Product Category.">
+            <option value=''>Pick One</option>
+            [% FOREACH category IN data.product_categories %]
+            <option value='[% category.id %]'>[% category.category %]</option>
+            [% END %]
+          </select>
+        </div>
+      </div>
+      <div class="row column">
+        <button type="submit" class="button" value="Save Subcategory">Save Subcategory</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="row column">
+  <hr>
+</div>
+<div class="row">
+  <div class="small-12 medium-6 columns">
+    <h4>Product Categories</h4>
+    <table class="hover stack sortable small_table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Shorthand</th>
+          <th>Created / Updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        [% FOREACH category IN data.product_categories %]
+        <tr>
+          <td>[% category.category %]</td>
+          <td>[% category.shorthand %]</td>
+          <td>[% date.format( category.created_on, format = datetime_format_short ) %]
+              [% IF category.updated_on %]<br>[% date.format( category.updated_on, format = datetime_format_short ) %][% END %]</td>
+          <td><a href="/admin/manage_product_categories/[% category.id %]/edit" class="tiny button">Edit</a>
+              <a href="/admin/manage_product_categories/[% category.id %]/delete" class="tiny alert button">Delete</a></td>
+        </tr>
+        [% END %]
+      </tbody>
+    </table>
+  </div>
+  <div class="small-12 medium-6 columns">
+    <h4>Product Subcategories</h4>
+    <table class="hover stack sortable small_table">
+      <thead>
+        <tr>
+          <th>Subcategory</th>
+          <th>Category</th>
+          <th>Created / Updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        [% FOREACH subcategory IN data.product_subcategories %]
+        <tr>
+          <td>[% subcategory.subcategory %]</td>
+          <td>[% subcategory.product_category.category %]</td>
+          <td>[% date.format( subcategory.created_on, format = datetime_format_short ) %]
+              [% IF subcategory.updated_on %]<br>[% date.format( subcategory.updated_on, format = datetime_format_short ) %][% END %]</td>
+          <td><a href="/admin/manage_product_categories/subcategory/[% subcategory.id %]/edit" class="tiny button">Edit</a>
+              <a href="/admin/manage_product_categories/subcategory/[% subcategory.id %]/delete" class="tiny alert button">Delete</a></td>
+        </tr>
+        [% END %]
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+  $.validate(
+    {
+      form: '#admin_new_category_form, #admin_new_subcategory_form',
+      errorMessagePosition: "inline"
+    }
+  );
+</script>

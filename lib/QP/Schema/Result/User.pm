@@ -126,8 +126,9 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key( 'id' );
 
-__PACKAGE__->has_many( 'userroles' => 'QP::Schema::Result::UserRole', 'user_id' );
-__PACKAGE__->many_to_many( 'roles' => 'userroles', 'role' );
+__PACKAGE__->has_many( 'userroles'     => 'QP::Schema::Result::UserRole', 'user_id' );
+__PACKAGE__->has_many( 'news_articles' => 'QP::Schema::Result::News', 'user_account_id' );
+__PACKAGE__->many_to_many( 'roles'     => 'userroles', 'role' );
 
 
 =head1 METHODS

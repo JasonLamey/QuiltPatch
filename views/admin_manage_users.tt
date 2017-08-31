@@ -1,0 +1,64 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row">
+      <div class="small-12">
+        <h3>Manage User Accounts</h3>
+      </div>
+    </div>
+
+    <div class="row column">
+      <a href="/admin/manage_users/add" class="button">Add New User Account</a>
+    </div>
+
+    <div class="row column">
+      <table id="user_table" class="hover">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>&nbsp;</th>
+          </tr>
+        </thead>
+        <tbody>
+        [% FOREACH user IN data.users %][% my_roles = [] %]
+          <tr>
+            <td>[% user.username %]</td>
+            <td>[% user.full_name %]</td>
+            <td>[% user.email %]</td>
+            <td>
+              [% FOREACH role IN user.roles %][% my_roles.push( role.role ) %] [% END %]
+              [% my_roles.sort.join( ', ' ) %]
+            </td>
+            <td><a href="/admin/manage_users/[% user.id %]/edit" class="tiny button">Edit</a>
+                <button class="tiny alert button" onclick="promptForDelete( '[% user.username %]', '/admin/manage_users/[% user.id %]/delete' );">Delete</button>
+            </td>
+          </tr>
+        [% END %]
+        </tbody>
+        <tfoot>
+        </tfoot>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#user_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 0, 'asc' ],
+      scrollY    : 600
+    }
+  );
+</script>

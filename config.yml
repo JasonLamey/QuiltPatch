@@ -48,6 +48,11 @@ template: "template_toolkit"
 
 session: Cookie
 
+datetime_format_short: '%d %b %Y, %I:%M %p'
+datetime_format_long: '%A, %d %B, %Y @ %I:%M %p'
+date_format_short: '%d %b %Y'
+date_format_long: '%A, %d %B, %Y'
+
 dbicx_sugar:
   default:
     dsn: 'dbi:mysql:database=quiltpatch;host=localhost'
@@ -82,6 +87,7 @@ plugins:
     quiltpatch:
       alias: 'default'
   Auth::Extensible:
+    permission_denied_page_handler: QP::Util::permission_denied_page_handler
     disable_roles: 0
     user_home_page: '/user'
     exit_page: '/'

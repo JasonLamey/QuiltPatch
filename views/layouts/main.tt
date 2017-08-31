@@ -5,18 +5,22 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
-      The Quilt Patch[% IF title %] | [% title %][% END %]
+      [% IF title %][% title %] | [% END %]The Quilt Patch
     </title>
     <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.min.css">
     <link rel="stylesheet" type="text/css" href="/css/app.css">
     <link rel="stylesheet" type="text/css" href="/css/jquery.modal.min.css">
     <link rel="stylesheet" type="text/css" href="/css/notifIt.css">
+    <link rel="stylesheet" type="text/css" href="/css/ply.css">
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.12/css/dataTables.foundation.css">
     <script type="text/javascript" src="/js/vendor/jquery/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="/js/vendor/jqueryui/jquery-ui.min.js"></script>
     <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyCOYMVliWCdnDsSyPNVtsuYf6cxoGY6eDk&amp;language=en"></script>
     <script type="text/javascript" src="/js/vendor/gmap3/gmap3.min.js"></script>
     <script type="text/javascript" src="/js/vendor/notif/notifIt.js"></script>
     <script type="text/javascript" src="/js/qp.js"></script>
+    <script type="text/javascript" src="//cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="//cdn.datatables.net/1.10.12/js/dataTables.foundation.min.js"></script>
   </head>
   <body>
     <header class="row align-middle portfolio-hero-header" data-equalizer="header">
@@ -119,5 +123,6 @@
     <script type="text/javascript" src="/js/vendor/jquery-modal/jquery.modal.min.js"></script>
     <script type="text/javascript" src="/js/vendor/easyPaginate/jquery.easyPaginate.js"></script>
     <script type="text/javascript" src="/js/vendor/mark.js/jquery.mark.min.js"></script>
+    <script type="text/javascript" src="/js/vendor/ply/Ply.min.js"></script>
   </body>
 </html>

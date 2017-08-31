@@ -118,6 +118,18 @@ sub get_allowed_html_rules
 }
 
 
+=head2 permission_denied_page_handler
+
+Routine to display the 'permission_denied' screen when a User doesn't have the proper role.
+
+=cut
+
+sub permission_denied_page_handler
+{
+  template 'views/permission_denied.tt';
+}
+
+
 =head1 COPYRIGHT & LICENSE
 
 Copyright 2016, Infinite Monkeys Games L<http://www.infinitemonkeysgames.com>

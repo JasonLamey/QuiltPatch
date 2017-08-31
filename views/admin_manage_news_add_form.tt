@@ -1,0 +1,85 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+  <div class="row column">
+    <div class="callout">
+
+    <div class="row">
+      <div class="small-12 columns">
+
+        <h3>Add News Item</h3>
+
+        <form action="/admin/manage_news/create" method="post" id="add_news_item_form" data-abide novalidate>
+
+          <input type="hidden" name="priority" value="1">
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="title" class="text-right middle">Title: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="text" maxlength="255" name="title" id="title" placeholder="Very Important News Headline!" value="" required>
+              <span class="form-error" data-form-error-for="title">Title is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="expires" class="text-right middle">Display Until: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="hidden" name="static" value="1">
+              <input type="date" name="expires" id="expires" value="" required><br>
+              <span class="form-error" data-form-error-for="expires">Expires is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="blurb" class="text-right middle">Blurb:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="blurb" id="blurb"></textarea><br>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="article" class="text-right middle">Article: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="article" id="article"
+              required></textarea><br>
+              <span class="form-error" data-form-error-for="article">Article is required.</span>
+            </div>
+          </div>
+
+          <div class="row column text-center">
+            <button type="submit" form="add_news_item_form" class="button">Add News Item</button>
+          </div>
+        </form>
+
+    </div>
+  </div>
+
+
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'blurb',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+          CKEDITOR.replace( 'article',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+  </div>
+</div>

@@ -63,3 +63,26 @@ function showInfo( msg )
   );
 }
 
+function promptForDelete( item, url )
+{
+  Ply.dialog( 'confirm',
+    {
+      effect : "3d-flip" // fade, scale, fall, slide, 3d-flip, 3d-sign
+    },
+    'Are you sure you want to delete >' + item + '<?'
+  )
+  .always( function(ui)
+    {
+      if (ui.state)
+      {
+        window.location.href = url;
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    }
+  );
+}
+

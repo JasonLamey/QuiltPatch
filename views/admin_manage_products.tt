@@ -1,0 +1,46 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/assets/js/vendor/sortable/sorttable.js"></script>
+<div class="row">
+  <div class="small-12 columns">
+    <h2>Product Management</h2>
+
+    <a href="/admin/manage_products/create" class="button">Add New Product</a><br>
+    <table class="hover stack sortable small_table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Product Type</th>
+          <th>Category/Subcategory</th>
+          <th>Base Price</th>
+          <th>SKU</th>
+          <th>Views</th>
+          <th width="20%"></th>
+        </tr>
+      </thead>
+      <tbody>
+      [% IF data.products.size < 1 %]
+        <tr>
+          <td colspan="7" class="text-center">No products found.</td>
+        </tr>
+      [% ELSE %]
+        [% FOREACH product IN data.products %]
+        <tr>
+          <td>[% product.name %]</td>
+          <td>[% product.product_type.type %]</td>
+          <td>[% product.product_subcategory.product_category.category %] - [% product.product_subcategory.subcategory %]</td>
+          <td>$[% product.base_price %]</td>
+          <td>[% product.sku %]</td>
+          <td>[% product.views %]</td>
+          <td class="align-middle text-center"><a href="/admin/manage_products/[% product.id %]/edit" class="button tiny">Edit</a>
+          <a href="/admin/manage_products/[% product.id %]/delete" class="button alert tiny">Delete</a></td>
+        </tr>
+        [% END %]
+      [% END %]
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="modal" id="admin-add-product-form" style="display: none;">
+  [% PROCESS '_admin_add_product_form.tt' %]
+</div>

@@ -28,7 +28,6 @@
         </script>
 
 [% BLOCK news_item %]
-              <blockquote>
                 <div class="article-row">
                   <div class="row column">
                     <h4>[% item.title %]</h4>
@@ -49,5 +48,4 @@
                     [% item.article %]
                   </div>
                 </div>
-              </blockquote>
 [% END %]

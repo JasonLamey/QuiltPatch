@@ -1,0 +1,50 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+<div class="row column">
+  <h2>Edit Product Subcategory</h2>
+</div>
+<div class="row column">
+  <form action="/admin/manage_product_categories/subcategory/[% data.product_subcategory.id %]/update" method="post" id="admin_edit_subcategory_form">
+    <div class="row align-center">
+      <div class="small-2 medium-2 columns align-right middle">
+        <label for="subcategory" class="text-right">Subcategory:</label>
+      </div>
+      <div class="small-4 medium-4 columns">
+        <input type="text" name="subcategory" placeholder="Punchbuggy" value="[% data.product_subcategory.subcategory %]"
+          data-validation="required" data-validation-error-msg="You need to provide a subcategory name.">
+      </div>
+    </div>
+    <div class="row align-center">
+      <div class="small-2 medium-2 columns align-right middle">
+        <label for="category_id" class="text-right">In Category:</label>
+      </div>
+      <div class="small-4 medium-4 columns">
+        <select name="category_id" data-validation="required" data-validation-error-msg="You need to choose a Product Category.">
+          <option value=''>Pick One</option>
+          [% FOREACH category IN data.product_categories %]
+          <option value='[% category.id %]'[% IF data.product_subcategory.category_id == category.id %] selected[% END %]>[% category.category %]</option>
+          [% END %]
+        </select>
+      </div>
+    </div>
+    <div class="row align-center">
+      <div class="small-2 columns">
+        <button type="submit" class="button text-center" value="Save Subcategory">Save Subcategory</button>
+      </div>
+    </div>
+    <div class="row column">
+      <p class="subtle_text"><small>Product Subcategory created on: [% date.format( data.product_category.created_on, format = datetime_format_short ) %]
+      [% IF data.product_category.updated_on %]
+      <br>Last updated on: [% date.format( data.product_category.updated_on, format = datetime_format_short ) %]
+      [% END %]</small></p>
+    </div>
+  </form>
+</div>
+<script>
+  $.validate(
+    {
+      form: '#admin_edit_subcategory_form',
+      errorMessagePosition: "inline"
+    }
+  );
+</script>

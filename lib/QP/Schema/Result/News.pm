@@ -78,8 +78,17 @@ __PACKAGE__->add_columns(
                             size              => 20,
                             is_nullable       => 0,
                           },
+                          views =>
+                          {
+                            datatype          => 'integer',
+                            size              => 10,
+                            is_nullable       => 0,
+                            default_value     => 0,
+                          },
                         );
 
 __PACKAGE__->set_primary_key( 'id' );
+
+__PACKAGE__->belongs_to( 'user' => 'QP::Schema::Result::User', 'user_account_id' );
 
 1;

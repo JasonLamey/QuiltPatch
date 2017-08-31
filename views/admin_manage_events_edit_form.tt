@@ -1,0 +1,110 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row column">
+      <h3>Edit Calendar Event</h3>
+    </div>
+
+    <div class="row align-center">
+      <div class="small-12 columns">
+        <form action="/admin/manage_events/[% data.event.id %]/update" method="post" id="edit_event_form" data-abide novalidate>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="title" class="text-right middle">Event Title: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="text" name="title" maxlength="255" placeholder="New Product Release!" value="[% data.event.title %]" required>
+              <span class="form-error">Please include an Event Title.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="description" class="text-right middle">Description:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="description" id="description">[% data.event.description || '' %]</textarea><br>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="start_datetime" class="text-right middle">Start Date &amp; Time: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="datetime-local" name="start_datetime" id="start_date" placeholder="YYYY-MM-DD" value="[% date.format( data.event.start_datetime, '%Y-%m-%dT%H:%M:%S' ) %]" step="900" required>
+              <span class="form-error">An event must include a start Date/Time.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="end_datetime" class="text-right middle">End Date &amp; Time: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="datetime-local" name="end_datetime" id="end_date" placeholder="YYYY-MM-DD" value="[% date.format( data.event.end_datetime, '%Y-%m-%dT%H:%M:%S' ) %]" step="900" required>
+              <span class="form-error">An event must include an end Date/Time.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="is_private" class="text-right middle">Private Event: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            [% checked = ''; IF data.event.is_private == 'true'; checked = ' checked'; END; %]
+            <div class="small-10 columns">
+              <div class="switch">
+                <input class="switch-input" id="yes-no" type="checkbox" name="is_private" value='1'[% checked %]>
+                <label class="switch-paddle" for="yes-no">
+                  <span class="show-for-sr">Private Event?</span>
+                  <span class="switch-active" aria-hidden="true">Yes</span>
+                  <span class="switch-inactive" aria-hidden="true">No</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="event_type" class="text-right middle">Event Type: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <select name="event_type" required>
+                <option value=''>Choose One</option>
+              [% FOREACH type IN [ 'Store Event','Closing','Class','Book Club' ] %]
+                [% selected = ''; IF data.event.event_type == type; selected = ' selected'; END; %]
+                <option value="[% type %]"[% selected %]>[% type %]</option>
+              [% END %]
+              </select>
+              <span class="form-error">An event type must be chosen.</span>
+            </div>
+          </div>
+
+          <div class="row column text-center">
+            <button type="submit" form="edit_event_form" class="button">Update Event</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'description',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+
+  </div>
+</div>
+

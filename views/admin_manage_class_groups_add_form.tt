@@ -1,0 +1,72 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+  <div class="row column">
+    <div class="callout">
+
+    <div class="row">
+      <div class="small-12 columns">
+
+        <h3>Add Class Group</h3>
+
+        <form action="/admin/manage_classes/groups/create" method="post" id="add_class_group_form" data-abide novalidate>
+
+          <input type="hidden" name="priority" value="1">
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="name" class="text-right middle">Name: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="text" maxlength="255" name="name" id="name" placeholder="Fun Classes For Awesome Quilters" value="" required>
+              <span class="form-error" data-form-error-for="title">A Class Group Name is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="description" class="text-right middle">Description:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="description" id="description"></textarea><br>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="footer_text" class="text-right middle">Footer Text:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="footer_text" id="footer_text"></textarea><br>
+            </div>
+          </div>
+
+          <div class="row column text-center">
+            <button type="submit" form="add_class_group_form" class="button">Add Class Group</button>
+          </div>
+        </form>
+
+    </div>
+  </div>
+
+
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'description',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+          CKEDITOR.replace( 'footer_text',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+  </div>
+</div>

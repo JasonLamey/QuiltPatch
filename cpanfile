@@ -7,6 +7,7 @@ recommends "HTTP::Parser::XS" => "0";
 
 requires   "Dancer2"                  => "0.205000";
 requires   "Dancer2::Plugin::Flash"   => "0.03";
+requires   "Dancer2::Plugin::Ajax"    => "0.300000";
 requires   "DBI"                      => "1.636";
 requires   "DBD::mysql"               => "4.042";
 requires   "DBIx::Class"              => "0.082840";

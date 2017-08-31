@@ -1,0 +1,68 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <div class="row column">
+      <h3>Admin Logs</h3>
+    </div>
+
+    <div class="row column">
+      <table id="logs_table" class="hover small_table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Log Level</th>
+            <th>Log Message</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          [% FOREACH log IN data.logs %]
+          <tr>
+            <td>[% date.format( log.created_on, format => datetime_format_short ) %]</td>
+            <td>
+            [% SWITCH log.log_level %]
+              [% CASE 'Error' %]
+              <span class="alert label">[% log.log_level %]</span>
+              [% CASE 'Warning' %]
+              <span class="warning label">[% log.log_level %]</span>
+              [% CASE 'Info' %]
+              <span class="label">[% log.log_level %]</span>
+              [% CASE 'Debug' %]
+              <span class="secondary label">[% log.log_level %]</span>
+              [% END %]
+            </td>
+            <td>[% log.log_message %]</td>
+            <td>[% log.admin %]<br>[% log.ip_address %]</td>
+          </tr>
+          [% END %]
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Timestamp</th>
+            <th>Log Level</th>
+            <th>Log Message</th>
+            <th>Admin</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#logs_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 0, 'desc' ],
+      scrollY    : 500
+    }
+  );
+</script>

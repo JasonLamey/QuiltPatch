@@ -1,0 +1,139 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <h2>Edit User Account</h2>
+</div>
+
+<div class="row align-center">
+  <div class="small-12 medium-8 columns">
+    <form action="/admin/manage_users/[% data.user.id %]/update" method="post" id="edit_user_account_form">
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="username" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Username:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" maxlength="50" name="username" placeholder="joe_user" value="[% data.user.username %]"
+            data-validation="required length" data-validation-length="3-50"
+            data-validation-error-msg-length="Username must be between 3 and 50 characters."
+            data-validation-error-msg="Account requires a Username.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="password" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Password:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="password" maxlength="140" name="password" placeholder="password1234"
+            data-validation="length" data-validation-length="3-40"
+            data-validation-optional="true"
+            data-validation-error-msg-length="Password must be between 3 and 40 characters."
+            data-validation-error-msg="Password is required."
+            data-validation-help="Only necessary if changing the user's password.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="birthdate" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Birthdate:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" name="birthdate" id="birthdate" placeholder="YYYY-MM-DD" value="[% data.user.birthdate %]"
+            data-validation="required birthdate" data-validation-format="yyyy-mm-dd"
+            data-validation-error-msg-birthdate="Birthdate must be in YYYY-MM-DD format."
+            data-validation-error-msg="Birthdate is required.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="email" class="text-right middle"><i class="fa fa-asterisk icon-red"></i> Email:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" maxlength="255" name="email" placeholder="joe_user@example.com" value="[% data.user.email %]"
+            data-validation="required email"
+            data-validation-error-msg="A valid email address is required.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="first_name" class="text-right middle">First Name:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" maxlength="255" name="first_name" placeholder="Joe" value="[% data.user.first_name %]"
+            data-validation="length" data-validation-length="3-255"
+            data-validation-error-msg-length="First name must be between 3 and 255 characters."
+            data-validation-optional='true'>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="last_name" class="text-right middle">Last Name:</label>
+        </div>
+        <div class="small-6 medium-8 columns">
+          <input type="text" maxlength="255" name="last_name" placeholder="User" value="[% data.user.last_name %]"
+            data-validation="length" data-validation-length="3-255"
+            data-validation-error-msg-length="Last name must be between 3 and 255 characters."
+            data-validation-optional='true'>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-6 medium-4 columns">
+          <label for="userroles" class="text-right middle">User Roles:</label>
+        </div>
+        <div class="small-6 medium-8 columns align-middle">
+          <fieldset>
+          [% FOREACH urole IN data.roles %]
+            <nobr><input type="checkbox" name="userroles" id="urole-[% urole.id %]" value="[% urole.id %]"
+            [% FOREACH userrole IN data.user.userroles %][% userrole.role_id == urole.id ? ' checked ' : '' %][% END %]>
+            <label for="urole-[% urole.id %]">[% urole.role %]</label></nobr>
+          [% END %]
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="row column text-center">
+        <button type="submit" class="button" form="edit_user_account_form">Update Account</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<div class="row column">
+  <span class="label">Account Created:</span> [% date.format( data.user.created_on, format => datetime_format_long ) %]<br>
+  <span class="label">Account Last Updated:</span>
+  [% IF data.user.updated_on != '' %]
+  [% date.format( data.user.updated_on, format => datetime_format_long ) %]
+  [% ELSE %]
+    Never
+  [% END %]<br>
+  <span class="label">Last Login:</span> [% date.format( data.user.lastlogin, format => datetime_format_long ) %]<br>
+  <span class="label">Password Last Changed:</span> [% date.format( data.user.pw_changed, format => datetime_format_long ) %]
+</div>
+
+<script>
+  $.validate
+  (
+    {
+      modules              : 'date',
+      errorMessagePosition : 'inline'
+    }
+  );
+  $('#birthdate').datetimepicker
+  (
+    {
+      format     : 'Y-m-d',
+      timepicker : false,
+      mask       : true,
+      inline     : false,
+      defaultDate: new Date(),
+      yearStart  : 1920
+    }
+  );
+</script>

@@ -1,0 +1,64 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/sortable/sorttable.js"></script>
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row">
+      <div class="small-12 columns">
+        <h3>Manage Calendar Events</h3>
+
+        <a href="/admin/manage_events/add" class="button">Add New Calendar Event</a><br>
+        <table class="display" id="events_table">
+          <thead>
+            <tr>
+              <th>Event Name</th>
+              <th>Start Date/Time</th>
+              <th>End Date/Time</th>
+              <th>Private</th>
+              <th>Event Type</th>
+              <th width="20%"></th>
+            </tr>
+          </thead>
+          <tbody>
+          [% IF data.events.size < 1 %]
+            <tr>
+              <td colspan="6" class="text-center">No events found.</td>
+            </tr>
+          [% ELSE %]
+            [% FOREACH event IN data.events %]
+            <tr>
+              <td>[% event.title %]</td>
+              <td>[% event.start_datetime %]</td>
+              <td>[% event.end_datetime %]</td>
+              <td>[% IF event.is_private == 'true' %]<span class="label alert"><i class="fa fa-eye-slash fa-fw"></i> Yes</span>[% ELSE %]<span class="label success"><i class="fa fa-eye fa-fw"></i> No</span>[% END %]</td>
+              <td>[% event.event_type %]</td>
+              <td class="align-middle text-center"><a href="/admin/manage_events/[% event.id %]/edit" class="button tiny">Edit</a>
+              <button class="tiny alert button" onclick="promptForDelete( '[% event.title %]', '/admin/manage_events/[% event.id %]/delete' );">Delete</button></td>
+            </tr>
+            [% END %]
+          [% END %]
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#events_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 1, 'desc' ],
+      scrollY    : 500
+    }
+  );
+</script>
+

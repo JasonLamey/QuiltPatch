@@ -1,0 +1,45 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <h2>Edit Product Category</h2>
+</div>
+<div class="row column">
+  <form action="/admin/manage_product_categories/[% data.product_category.id %]/update" method="post" id="admin_edit_category_form">
+    <div class="row align-center">
+      <div class="small-2 columns align-right middle">
+        <label for="category" class="text-right">Category:</label>
+      </div>
+      <div class="small-4 columns">
+        <input type="text" name="category" placeholder="Tabletop Games" value="[% data.product_category.category %]" data-validation="required" data-validation-error-msg="You need to provide a category name.">
+      </div>
+    </div>
+    <div class="row align-center">
+      <div class="small-2 columns align-right middle">
+        <label for="shorthand" class="text-right">Shorthand:</label>
+      </div>
+      <div class="small-4 columns">
+        <input type="text" name="shorthand" placeholder="tabletop" value="[% data.product_category.shorthand %]" data-validation="required alphanumeric" data-validation-error-msg="You need to provide a shorthand name for use in URLs. No spaces.">
+      </div>
+    </div>
+    <div class="row align-center">
+      <div class="small-2 columns">
+        <button type="submit" class="button" value="Save Category">Save Category</button>
+      </div>
+    </div>
+    <div class="row column">
+      <p class="subtle_text"><small>Product Category created on: [% date.format( data.product_category.created_on, format = datetime_format_short ) %]
+      [% IF data.product_category.updated_on %]
+      <br>Last updated on: [% date.format( data.product_category.updated_on, format = datetime_format_short ) %]
+      [% END %]</small></p>
+    </div>
+  </form>
+</div>
+<script>
+  $.validate(
+    {
+      form: '#admin_edit_category_form',
+      errorMessagePosition: "inline"
+    }
+  );
+</script>

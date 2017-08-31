@@ -1,0 +1,57 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row">
+  <div class="small-12 columns">
+    <h2>Manage Featured Products</h2>
+
+    <form action="/admin/manage_featured_products/update" method="post">
+    [% current_cat    = '' %]
+    [% current_subcat = '' %]
+    [% FOREACH product IN data.products %]
+      [% IF current_subcat != product.product_subcategory.subcategory %]
+        [% IF current_subcat %]
+      </tbody>
+    </table>
+        [% END %]
+        [% current_subcat = product.product_subcategory.subcategory %]
+        [% IF current_cat != product.product_subcategory.product_category.category %][% current_cat = product.product_subcategory.product_category.category %][% END %]
+    <h5>[% current_cat %] - [% current_subcat %]</h5>
+    <table class="hover stack sortable">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th width="25%">Featured</th>
+          <th width="25%">Expires</th>
+        </tr>
+      </thead>
+      <tbody>
+      [% END %]
+        <tr>
+          <td>[% product.name %]</td>
+          <td>
+            <div class="switch tiny">
+            <input type="hidden" name="product_subcategory_id_[% product.id %]" value="[% product.product_subcategory_id %]">
+            <input type="hidden" name="created_on_[% product.id %]" value="[% product.featured_product.created_on %]">
+            <input class="switch-input" id="featured_[% product.id %]" type="checkbox" value="1" name="featured_[% product.id %]"[% IF product.featured_product %] checked[% END %]>
+            <label class="switch-paddle" for="featured_[% product.id %]"><span class="show-for-sr">Feature [% product.name %]</span></label>
+            <input type="hidden" value="[% IF product.featured_product %]1[% END %]" name="featured_[% product.id %]_old">
+          </td>
+          <td><input type="text" placeholder="yyyy-mm-dd" name="expires_on_[% product.id %]" value="[% product.featured_product.expires_on %]" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                data-validation="date" data-validation-optional="true">
+              <input type="hidden" name="expires_on_[% product.id %]_old" value="[% product.featured_product.expires_on %]"></td>
+        </tr>
+    [% END %]
+      </tbody>
+    </table>
+    <div class="row column text-center">
+      <button type="submit" class="button">Update Featured Products</button>
+    </div>
+    </form>
+    <script>
+      $.validate({
+        modules : 'date'
+      });
+</script>
+  </div>
+</div>

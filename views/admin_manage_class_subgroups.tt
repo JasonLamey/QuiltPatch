@@ -1,0 +1,34 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h3>Manage Class Subgroups</h3>
+
+    <div class="row column">
+      <a href="/admin/manage_classes/subgroups/add" class="button notice" rel="modal:open">Create New Subgroup</a>
+    </div>
+
+    [% FOREACH group IN data.class_groups %]
+    <h5>[% group.name %]</h5>
+      [% FOREACH subgroup IN data.class_subgroups %]
+        [% IF subgroup.class_group_id == group.id %]
+    <div class="row">
+      <div class="small-6 medium-5 columns">
+      [% subgroup.subgroup %]
+      </div>
+      <div class="hide-for-small-only medium-2 columns">
+      [% subgroup.order_by %]
+      </div>
+      <div class="small-6 medium-5 columns">
+        <a href="/admin/manage_classes/subgroups/[% subgroup.id %]/edit" class="button tiny notice" rel="modal:open">Edit</a>
+        <button class="button tiny alert" onclick="promptForDelete( '[% subgroup.subgroup %]', '/admin/manage_classes/subgroups/[% subgroup.id %]/delete' );">Delete</button>
+      </div>
+    </div>
+        [% END %]
+      [% END %]
+    <br>
+    [% END %]
+  </div>
+</div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/Sortable/1.6.0/Sortable.min.js"></script>

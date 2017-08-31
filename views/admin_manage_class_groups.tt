@@ -1,0 +1,60 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row column">
+      <h3>Manage Class Groups</h3>
+    </div>
+
+    <div class="row column">
+      <a href="/admin/manage_classes/groups/add" class="button">Create New Class Group</a>
+    </div>
+
+    <div class="row align-center">
+      <div class="small-12 columns">
+        <table class="display" id="groups_table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Footer Text</th>
+              <th width="15%">&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            [% FOREACH group IN data.class_groups %]
+            <tr>
+              <td>[% group.name %]</td>
+              <td>[% IF group.description.length > 50 %][% group.description.substr(0,50) %]&hellip;[% ELSE %][% group.description %][% END %]</td>
+              <td>[% IF group.footer_text.length > 50 %][% group.footer_text.substr(0,50) %]&hellip;[% ELSE %][% group.footer_text %][% END %]</td>
+              <td>
+                <a href="/admin/manage_classes/groups/[% group.id %]/edit" class="tiny button">Edit</a>
+                <button class="tiny alert button" onclick="promptForDelete( '[% group.name %]', '/admin/manage_classes/groups/[% group.id %]/delete' );">Delete</button>
+              </td>
+            </tr>
+            [% END %]
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#groups_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 0, 'asc' ],
+      scrollY    : 500
+    }
+  );
+</script>
+

@@ -4,6 +4,7 @@ use Dancer2::Session::Cookie;
 use Dancer2::Plugin::Flash;
 use Dancer2::Plugin::DBIC;
 use Dancer2::Plugin::Auth::Extensible;
+use Dancer2::Plugin::Ajax;
 
 use strict;
 use warnings;
@@ -13,6 +14,7 @@ use Const::Fast;
 use DateTime;
 use URI::Escape::JavaScript;
 use DBICx::Sugar;
+use Clone;
 
 use QP::Log;
 use QP::Mail;
@@ -21,6 +23,7 @@ use QP::Util;
 
 our $VERSION = '2.0';
 
+const my $DOMAIN_ROOT               => 'http://www.quiltpatchva.com';
 const my $SCHEMA    => QP::Schema->db_connect();
 const my $DT_PARSER => $SCHEMA->storage->datetime_parser;
 const my $USER_SESSION_EXPIRE_TIME  => 172800; # 48 hours in seconds.
@@ -29,6 +32,16 @@ const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensib
 const my $DATA_FORM_VALIDATOR => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
 
 $SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
+
+hook before_template_render => sub
+{
+  my $tokens = shift;
+  $tokens->{domain_root}           = $DOMAIN_ROOT;
+  $tokens->{datetime_format_short} = config->{datetime_format_short};
+  $tokens->{datetime_format_long}  = config->{datetime_format_long};
+  $tokens->{date_format_short}     = config->{date_format_short};
+  $tokens->{date_format_long}      = config->{date_format_long};
+};
 
 
 =head2 GET C</>
@@ -219,6 +232,9 @@ get '/news/:news_type/:news_id' => sub
                                                           id => $news_id,
                                                         }
   );
+
+  $news_article->views( $news_article->views + 1 );
+  $news_article->update;
 
   template 'news_article',
   {
@@ -1311,139 +1327,80 @@ get '/admin' => require_role Admin => sub
       [
         { name => 'Admin', current => 1 },
       ],
-      subtitle => 'Admin Dashboard',
+      title => 'Admin Dashboard',
     };
 };
 
 
-=head2 GET C</admin/manage_products>
+=head2 GET C</admin/manage_classes/groups>
 
-Route to Product Management dashboard. Requires being logged in and of admin role.
+Route to Class Group management dashboard. Requires being logged in and of admin role.
 
 =cut
 
-get '/admin/manage_products' => require_role Admin => sub
+get '/admin/manage_classes/groups' => require_role Admin => sub
 {
-
-  my @products = $SCHEMA->resultset( 'Product' )->search( undef,
+  my @class_groups = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
                                                           {
                                                             order_by => { -asc => 'name' },
-                                                            prefetch => [
-                                                                          'product_type',
-                                                                          { 'product_subcategory' => 'product_category' },
-                                                                          'images',
-                                                                        ],
                                                           }
-                                                        );
-  my @product_types = $SCHEMA->resultset( 'ProductType' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
-  my @product_subcategories = $SCHEMA->resultset( 'ProductSubcategory' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
+  );
 
-  template 'admin_manage_products',
+  template 'admin_manage_class_groups',
   {
     data =>
     {
-      products              => \@products,
-      product_types         => \@product_types,
-      product_subcategories => \@product_subcategories,
+      class_groups => \@class_groups,
     },
     breadcrumbs =>
     [
       { name => 'Admin', link => '/admin' },
-      { name => 'Manage Products', current => 1 },
+      { name => 'Manage Class Groups', current => 1 },
     ],
+    title => 'Manage Class Groups',
   };
 };
 
 
-=head2 GET C</admin/manage_products/create>
+=head2 GET C</admin/manage_classes/groups/add>
 
-Route to create new product. Requires being logged in and of Admin role.
+Route to add new class group form. Requires being logged in and of Admin role.
 
 =cut
 
-get '/admin/manage_products/create/?:modal?' => require_role Admin => sub
+get '/admin/manage_classes/groups/add' => require_role Admin => sub
 {
-  my @product_types = $SCHEMA->resultset( 'ProductType' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
-  my @product_subcategories = $SCHEMA->resultset( 'ProductSubcategory' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
-
-  my $layout = ( route_parameters->get( 'modal' ) ) ? 'modal' : 'main';
-  template 'admin_manage_products_create',
+  template 'admin_manage_class_groups_add_form',
       {
         data =>
         {
-          product_types         => \@product_types,
-          product_subcategories => \@product_subcategories,
         },
         breadcrumbs =>
         [
           { name => 'Admin', link => '/admin' },
-          { name => 'Manage Products', link => '/admin/manage_products' },
-          { name => 'Add New Product', current => 1 },
+          { name => 'Manage Class Groups', link => '/admin/manage_classes/groups' },
+          { name => 'Add New Class Group', current => 1 },
         ],
-        subtitle => 'Add Product',
-      },
-      { layout => $layout };
+        title => 'Add Class Group',
+      };
 };
 
 
-=head2 POST C</admin/manage_products/add>
+=head2 POST C</admin/manage_classes/groups/create>
 
-Route to save new product data to the database.  Requires being logged in and of Admin role.
+Route to save new class group data to the database.  Requires being logged in and of Admin role.
 
 =cut
 
-post '/admin/manage_products/add' => require_role Admin => sub
+post '/admin/manage_classes/groups/create' => require_role Admin => sub
 {
-  my $form_input   = body_parameters->as_hashref;
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_new_product_form' );
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
+  my $new_group = $SCHEMA->resultset( 'ClassGroup' )->create(
     {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your new product information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_products';
-  }
-
-  my $product_check = $SCHEMA->resultset( 'Product' )->find( { name => body_parameters->get( 'name' ) } );
-
-  if ( defined $product_check and ref( $product_check ) eq 'IMGames::Schema::Result::Product' )
-  {
-    flash error => sprintf( 'Product &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'name' ) );
-    redirect '/admin/manage_products';
-  }
-
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
-
-  my $new_product = $SCHEMA->resultset( 'Product' )->create(
-    {
-      name                   => body_parameters->get( 'name' ),
-      product_type_id        => body_parameters->get( 'product_type_id' ),
-      product_subcategory_id => body_parameters->get( 'product_subcategory_id' ),
-      base_price             => body_parameters->get( 'base_price' ),
-      status                 => body_parameters->get( 'status' ),
-      back_in_stock_date     => ( body_parameters->get( 'back_in_stock_date' ) ne '' ) ? body_parameters->get( 'back_in_stock_date' ) : undef,
-      sku                    => body_parameters->get( 'sku' ),
-      intro                  => body_parameters->get( 'intro' ),
-      description            => body_parameters->get( 'description' ),
-      created_on             => $now,
+      name        => body_parameters->get( 'name' ),
+      description => ( body_parameters->get( 'description' ) ? body_parameters->get( 'description' ) : undef ),
+      footer_text => ( body_parameters->get( 'footer_text' ) ? body_parameters->get( 'footer_text' ) : undef ),
     }
   );
 
@@ -1454,189 +1411,390 @@ post '/admin/manage_products/add' => require_role Admin => sub
     push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
   }
 
-  info sprintf( 'Created new product >%s<, ID: >%s<, on %s', body_parameters->get( 'name' ), $new_product->id, $now );
+  info sprintf( 'Created new class group >%s<, ID: >%s<, on %s', body_parameters->get( 'name' ), $new_group->id, $now );
 
-  flash success => sprintf( 'Successfully created Product &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'name' ) );
-  my $logged = IMGames::Log->admin_log
+  flash success => sprintf( 'Successfully created Class Group &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'name' ) );
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
     log_level   => 'Info',
-    log_message => sprintf( 'Created new product:<br>%s', join( '<br>', @fields ) ),
+    log_message => sprintf( 'Created new class group<br>%s', join( '<br>', @fields ) ),
   );
 
-  redirect '/admin/manage_products';
+  redirect '/admin/manage_classes/groups';
 };
 
 
-=head2 GET C</admin/manage_products/:product_id/edit>
+=head2 GET C</admin/manage_classes/groups/:group_id/edit>
 
 Route for presenting the edit product form. Requires the user be logged in and an Admin.
 
 =cut
 
-get '/admin/manage_products/:product_id/edit' => require_role Admin => sub
+get '/admin/manage_classes/groups/:group_id/edit' => require_role Admin => sub
 {
-  my $product_id = route_parameters->get( 'product_id' );
+  my $group_id = route_parameters->get( 'group_id' );
 
-  my $product = $SCHEMA->resultset( 'Product' )->find( $product_id,
-                                                       {
-                                                        prefetch =>
-                                                        [
-                                                          'images',
-                                                        ],
-                                                       },
-  );
+  my $group = $SCHEMA->resultset( 'ClassGroup' )->find( $group_id );
 
-  my @product_types = $SCHEMA->resultset( 'ProductType' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
-  my @product_subcategories = $SCHEMA->resultset( 'ProductSubcategory' )->search( undef,
-                                                                    { order_by => { -asc => 'id' } }
-                                                                 );
-
-  my $layout = ( route_parameters->get( 'modal' ) ) ? 'modal' : 'main';
-  template 'admin_manage_products_edit',
+  template 'admin_manage_class_groups_edit_form',
       {
         data =>
         {
-          product               => $product,
-          product_types         => \@product_types,
-          product_subcategories => \@product_subcategories,
-          endpoint              => sprintf( '/admin/manage_products/%s/upload', $product_id ),
+          group => $group,
         },
         breadcrumbs =>
         [
           { name => 'Admin', link => '/admin' },
-          { name => 'Manage Products', link => '/admin/manage_products' },
-          { name => sprintf( 'Edit Product (%s)', $product->name ), current => 1 },
+          { name => 'Manage Class Groups', link => '/admin/manage_classes/groups' },
+          { name => 'Edit Class Group', current => 1 },
         ],
-        subtitle => 'Edit Product',
-      },
-      { layout => $layout };
+        title => 'Edit Class Group',
+      };
 };
 
 
-=head2 POST C</admin/manage_products/:product_id/update>
+=head2 POST C</admin/manage_classes/groups/:group_id/update>
 
-Route for updating a product record. Requires the user to be logged in and an Admin.
+Route to send form data to for updating a class group in the DB. Requires user to have Admin role.
 
 =cut
 
-post '/admin/manage_products/:product_id/update' => require_role Admin => sub
+post '/admin/manage_classes/groups/:group_id/update' => require_role Admin => sub
 {
-  my $product_id = route_parameters->get( 'product_id' );
+  my $group_id = route_parameters->get( 'group_id' );
 
-  my $form_input   = body_parameters->as_hashref;
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_product_form' );
+  my $group = $SCHEMA->resultset( 'ClassGroup' )->find( $group_id );
+  my $orig_group = Clone::clone( $group );
 
-  if ( $form_results->has_invalid or $form_results->has_missing )
+  if
+  (
+    not defined $group
+    or
+    ref( $group ) ne 'QP::Schema::Result::ClassGroup'
+  )
   {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your product information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_products';
+    flash( error => 'Error: Cannot update class group - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/groups';
   }
 
-  my $product = $SCHEMA->resultset( 'Product' )->find( $product_id );
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $group->name( body_parameters->get( 'name' ) );
+  $group->description( body_parameters->get( 'description' ) ? body_parameters->get( 'description' ) : undef );
+  $group->footer_text( body_parameters->get( 'footer_text' ) ? body_parameters->get( 'footer_text' ) : undef );
 
-  if ( not defined $product or ref( $product ) ne 'IMGames::Schema::Result::Product' )
-  {
-    flash error => sprintf( 'Invalid Product ID <strong>%s</strong>.', $product_id );
-    redirect '/admin/manage_products';
-  }
+  $group->update();
 
-  my $orig_product = Clone::clone( $product );
-
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
-  $product->name( body_parameters->get( 'name' ) );
-  $product->product_type_id( body_parameters->get( 'product_type_id' ) );
-  $product->product_subcategory_id( body_parameters->get( 'product_subcategory_id' ) );
-  $product->base_price( body_parameters->get( 'base_price' ) );
-  $product->status( body_parameters->get( 'status' ) ),
-  $product->back_in_stock_date( ( body_parameters->get( 'back_in_stock_date' ) ne '' ) ? body_parameters->get( 'back_in_stock_date' ) : undef ),
-  $product->sku( body_parameters->get( 'sku' ) );
-  $product->intro( body_parameters->get( 'intro' ) );
-  $product->description( body_parameters->get( 'description' ) );
-  $product->updated_on( $now );
-
-  $product->update;
-
-  flash success => sprintf( 'Successfully updated Product &quot;<strong>%s</strong>&quot;!', $product->name );
-  info sprintf( 'Product >%s< updated by %s on %s.', $product->name, logged_in_user->username, $now );
+  info sprintf( 'Class group >%s< updated by %s on %s.', $group->name, logged_in_user->username, $now );
 
   my $old =
   {
-    name                   => $orig_product->name,
-    product_type_id        => $orig_product->product_type_id,
-    product_subcategory_id => $orig_product->product_subcategory_id,
-    base_price             => $orig_product->base_price,
-    status                 => $orig_product->status,
-    back_in_stock_date     => $orig_product->back_in_stock_date,
-    sku                    => $orig_product->sku,
-    intro                  => $orig_product->intro,
-    description            => $orig_product->description,
+    name        => $orig_group->name,
+    description => $orig_group->description,
+    footer_text => $orig_group->footer_text,
   };
   my $new =
   {
-    name                   => body_parameters->get( 'name' ),
-    product_type_id        => body_parameters->get( 'product_type_id' ),
-    product_subcategory_id => body_parameters->get( 'product_subcategory_id' ),
-    base_price             => body_parameters->get( 'base_price' ),
-    status                 => body_parameters->get( 'status' ),
-    back_in_stock_date     => body_parameters->get( 'back_in_stock_date' ),
-    sku                    => body_parameters->get( 'sku' ),
-    intro                  => body_parameters->get( 'intro' ),
-    description            => body_parameters->get( 'description' ),
+    name        => body_parameters->get( 'name' ),
+    description => ( body_parameters->get( 'description' ) ? body_parameters->get( 'description' ) : undef ),
+    footer_text => ( body_parameters->get( 'footer_text' ) ? body_parameters->get( 'footer_text' ) : undef ),
   };
 
-  my $diffs = IMGames::Log->find_changes_in_data( old_data => $old, new_data => $new );
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
     log_level   => 'Info',
-    log_message => sprintf( 'Product modified:<br>%s', join( ', ', @{ $diffs } ) ),
+    log_message => sprintf( 'Class group modified:<br>%s', join( ', ', @{ $diffs } ) ),
   );
 
-  redirect '/admin/manage_products';
+  flash( success => sprintf( 'Successfully updated class group &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'name' ) ) );
+  redirect '/admin/manage_classes/groups';
 };
 
 
-=head2 GET C</admin/manage_products/:product_id/delete>
+=head2 GET C</admin/manage_classes/groups/:group_id/delete>
 
-Route to delete a product. Requires the user be logged in and an Admin.
+Route to delete a class group. Requires the user be logged in and an Admin.
 
 =cut
 
-get '/admin/manage_products/:product_id/delete' => require_role Admin => sub
+get '/admin/manage_classes/groups/:group_id/delete' => require_role Admin => sub
 {
-  my $product_id = route_parameters->get( 'product_id' );
+  my $group_id = route_parameters->get( 'group_id' );
 
-  my $product = $SCHEMA->resultset( 'Product' )->find( $product_id );
-  my $product_name = $product->name;
+  my $group = $SCHEMA->resultset( 'ClassGroup' )->find( $group_id );
+  my $group_name = $group->name;
 
-  $product->delete;
+  if
+  (
+    not defined $group
+    or
+    ref( $group ) ne 'QP::Schema::Result::ClassGroup'
+  )
+  {
+    flash( error => 'Error: Cannot delete class group - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/groups';
+  }
 
-  flash success => sprintf( 'Successfully deleted Product <strong>%s</strong>.', $product_name );
-  my $logged = IMGames::Log->admin_log
+  $group->delete;
+
+  flash success => sprintf( 'Successfully deleted Class Group <strong>%s</strong>.', $group_name );
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
     log_level   => 'Info',
-    log_message => sprintf( 'Product &quot;%s&quot; deleted', $product_name ),
+    log_message => sprintf( 'Class group &quot;%s&quot; deleted', $group_name ),
   );
-  redirect '/admin/manage_products';
+  redirect '/admin/manage_classes/groups';
+};
+
+
+=head2 GET C</admin/manage_classes/subgroups>
+
+Route to Class Subgroup management dashboard. Requires being logged in and of admin role.
+
+=cut
+
+get '/admin/manage_classes/subgroups' => require_role Admin => sub
+{
+  my @class_subgroups = $SCHEMA->resultset( 'ClassSubgroup' )->search( undef,
+                                                          {
+                                                            order_by =>
+                                                            {
+                                                              -asc =>
+                                                              [
+                                                                'class_group_id',
+                                                                'order_by',
+                                                              ]
+                                                            },
+                                                          }
+  );
+
+  my @class_groups = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_class_subgroups',
+  {
+    data =>
+    {
+      class_subgroups => \@class_subgroups,
+      class_groups    => \@class_groups,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Class Subgroups', current => 1 },
+    ],
+    title => 'Manage Class Subgroups',
+  };
+};
+
+
+=head2 GET C</admin/manage_classes/subgroups/add>
+
+Route to add new class subgroup form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_classes/subgroups/add' => require_role Admin => sub
+{
+  my @groups   = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+  template 'admin_manage_classes_subgroups_add_form',
+      {
+        data =>
+        {
+          groups => \@groups,
+        },
+        title => 'Add Class Subgroup',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_classes/subgroups/create>
+
+Route to save new class subgroup data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_classes/subgroups/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $new_subgroup = $SCHEMA->resultset( 'ClassSubgroup' )->create(
+    {
+      subgroup       => body_parameters->get( 'subgroup' ),
+      class_group_id => body_parameters->get( 'class_group_id' ),
+      order_by       => body_parameters->get( 'order_by' ),
+    }
+  );
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new class subgroup >%s<, ID: >%s<, on %s', body_parameters->get( 'subgroup' ), $new_subgroup->id, $now );
+
+  flash success => sprintf( 'Successfully created Class Subgroup &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'subgroup' ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new class subgroup<br>%s', join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_classes/subgroups';
+};
+
+
+=head2 AJAX C</admin/manage_classes/subgroups/:subgroup_id/edit>
+
+Route for presenting the edit class subgroup form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/subgroups/:subgroup_id/edit' => require_role Admin => sub
+{
+  my $subgroup_id = route_parameters->get( 'subgroup_id' );
+
+  my $subgroup = $SCHEMA->resultset( 'ClassSubgroup' )->find( $subgroup_id );
+  my @groups   = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_classes_subgroups_edit_form',
+      {
+        data =>
+        {
+          groups   => \@groups,
+          subgroup => $subgroup,
+        },
+        title => 'Edit Class Subgroup',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_classes/subgroups/:subgroup_id/update>
+
+Route to send form data to for updating a class subgroup in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_classes/subgroups/:subgroup_id/update' => require_role Admin => sub
+{
+  my $subgroup_id = route_parameters->get( 'subgroup_id' );
+
+  my $subgroup      = $SCHEMA->resultset( 'ClassSubgroup' )->find( $subgroup_id );
+  my $orig_subgroup = Clone::clone( $subgroup );
+
+  if
+  (
+    not defined $subgroup
+    or
+    ref( $subgroup ) ne 'QP::Schema::Result::ClassSubgroup'
+  )
+  {
+    flash( error => 'Error: Cannot update class subgroup - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/subgroups';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $subgroup->class_group_id( body_parameters->get( 'class_group_id' ) );
+  $subgroup->subgroup( body_parameters->get( 'subgroup' ) );
+  $subgroup->order_by( body_parameters->get( 'order_by' ) ? body_parameters->get( 'order_by' ) : 1 );
+
+  $subgroup->update();
+
+  info sprintf( 'Class subgroup >%s< updated by %s on %s.', $subgroup->subgroup, logged_in_user->username, $now );
+
+  my $old =
+  {
+    class_group_id => $orig_subgroup->class_group_id,
+    subgroup       => $orig_subgroup->subgroup,
+    order_by       => $orig_subgroup->order_by,
+  };
+  my $new =
+  {
+    class_group_id => body_parameters->get( 'class_group_id' ),
+    subgroup       => body_parameters->get( 'subgroup' ),
+    order_by       => body_parameters->get( 'order_by' ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class subgroup modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated class subgroup &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'subgroup' ) ) );
+  redirect '/admin/manage_classes/subgroups';
+};
+
+
+=head2 GET C</admin/manage_classes/subgroups/:subgroup_id/delete>
+
+Route to delete a class subgroup. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/subgroups/:subgroup_id/delete' => require_role Admin => sub
+{
+  my $subgroup_id = route_parameters->get( 'subgroup_id' );
+
+  my $subgroup = $SCHEMA->resultset( 'ClassSubgroup' )->find( $subgroup_id );
+  my $subgroup_name = $subgroup->subgroup;
+
+  if
+  (
+    not defined $subgroup
+    or
+    ref( $subgroup ) ne 'QP::Schema::Result::ClassSubgroup'
+  )
+  {
+    flash( error => 'Error: Cannot delete class subgroup - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/groups';
+  }
+
+  $subgroup->delete;
+
+  flash success => sprintf( 'Successfully deleted Class Subgroup <strong>%s</strong>.', $subgroup_name );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class subgroup &quot;%s&quot; deleted', $subgroup_name ),
+  );
+  redirect '/admin/manage_classes/subgroups';
 };
 
 
@@ -1687,7 +1845,7 @@ post '/admin/manage_products/:product_id/upload' => require_role Admin => sub
       product_id => $product_id,
       filename   => $upload_data->basename,
       highlight  => 0,
-      created_on => DateTime->now( time_zone => 'UTC' )->datetime,
+      created_on => DateTime->now( time_zone => 'America/New_York' )->datetime,
     },
   );
 
@@ -1712,14 +1870,14 @@ post '/admin/manage_products/:product_id/images/update' => require_role Admin =>
     redirect sprintf( '/admin/manage_products/%s/edit', $product_id );
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
   my $highlighted_image = $SCHEMA->resultset( 'ProductImage' )->find( { product_id => $product_id, highlight => 1 } );
   if
   (
     defined $highlighted_image
     and
-    ref( $highlighted_image ) eq 'IMGames::Schema::Result::ProductImage'
+    ref( $highlighted_image ) eq 'QP::Schema::Result::ProductImage'
   )
   {
     if ( $highlighted_image->id == $new_highlight_id )
@@ -1771,7 +1929,7 @@ get '/admin/manage_product_categories' => require_role Admin => sub
           { name => 'Admin', link => '/admin' },
           { name => 'Manage Product Categories and Subcategories', current => 1 },
         ],
-        subtitle => 'Manage Product Categories and Subcategories',
+        title => 'Manage Product Categories and Subcategories',
       };
 };
 
@@ -1820,7 +1978,7 @@ post '/admin/manage_product_categories/add' => require_role Admin => sub
     redirect '/admin/manage_product_categories';
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   my $new_product_category = $SCHEMA->resultset( 'ProductCategory' )->create(
     {
       category   => body_parameters->get( 'category' ),
@@ -1833,7 +1991,7 @@ post '/admin/manage_product_categories/add' => require_role Admin => sub
   (
     not defined $new_product_category
     or
-    ref( $new_product_category ) ne 'IMGames::Schema::Result::ProductCategory'
+    ref( $new_product_category ) ne 'QP::Schema::Result::ProductCategory'
   )
   {
     flash error => sprintf( 'Something went wrong. Could not save Product Category &quot;<strong>%s</strong>&quot;.', body_parameters->get( 'category' ) );
@@ -1843,7 +2001,7 @@ post '/admin/manage_product_categories/add' => require_role Admin => sub
   info sprintf( 'Created new product category >%s<, ID: >%s<, on %s', body_parameters->get( 'category' ), $new_product_category->id, $now );
 
   flash success => sprintf( 'Successfully created Product Category &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'category' ) );
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -1871,7 +2029,7 @@ get '/admin/manage_product_categories/:product_category_id/delete' => require_ro
   (
     not defined $product_category
     or
-    ref( $product_category ) ne 'IMGames::Schema::Result::ProductCategory'
+    ref( $product_category ) ne 'QP::Schema::Result::ProductCategory'
   )
   {
     flash error => sprintf( 'Unknown or invalid product category.' );
@@ -1897,8 +2055,8 @@ get '/admin/manage_product_categories/:product_category_id/delete' => require_ro
 
   flash success => sprintf( 'Successfully deleted product category &quot;<strong>%s</strong>&quot;.', $category );
 
-  info sprintf( 'Deleted product category >%s<, ID: >%s<, on %s', $category, $product_category_id, DateTime->now( time_zone => 'UTC' )->datetime );
-  my $logged = IMGames::Log->admin_log
+  info sprintf( 'Deleted product category >%s<, ID: >%s<, on %s', $category, $product_category_id, DateTime->now( time_zone => 'America/New_York' )->datetime );
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -1926,7 +2084,7 @@ get '/admin/manage_product_categories/:product_category_id/edit' => require_role
   (
     not defined $product_category
     or
-    ref( $product_category ) ne 'IMGames::Schema::Result::ProductCategory'
+    ref( $product_category ) ne 'QP::Schema::Result::ProductCategory'
   )
   {
     flash error => sprintf( 'Unknown or invalid product category.' );
@@ -1945,7 +2103,7 @@ get '/admin/manage_product_categories/:product_category_id/edit' => require_role
         { name => 'Manage Product Categories and Subcategories', link => '/admin/manage_product_categories' },
         { name => sprintf( 'Edit Product Category (%s)', $product_category->category ), current => 1 },
       ],
-      subtitle => 'Edit Product Category',
+      title => 'Edit Product Category',
     };
 };
 
@@ -2019,7 +2177,7 @@ post '/admin/manage_product_categories/:product_category_id/update' => require_r
 
   my $orig_product_category = Clone::clone( $product_category );
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   $product_category->category( body_parameters->get( 'category' ) );
   $product_category->shorthand( body_parameters->get( 'shorthand' ) );
   $product_category->updated_on( $now );
@@ -2041,9 +2199,9 @@ post '/admin/manage_product_categories/:product_category_id/update' => require_r
     shorthand => $orig_product_category->shorthand
   };
 
-  my $diffs = IMGames::Log->find_changes_in_data( old_data => $old, new_data => $new );
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -2098,7 +2256,7 @@ post '/admin/manage_product_categories/subcategory/add' => require_role Admin =>
     redirect '/admin/manage_product_categories';
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   my $new_product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->create(
     {
       subcategory => body_parameters->get( 'subcategory' ),
@@ -2111,7 +2269,7 @@ post '/admin/manage_product_categories/subcategory/add' => require_role Admin =>
   (
     not defined $new_product_subcategory
     or
-    ref( $new_product_subcategory ) ne 'IMGames::Schema::Result::ProductSubcategory'
+    ref( $new_product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
   )
   {
     flash error => sprintf( 'Something went wrong. Could not save Product Subcategory &quot;<strong>%s</strong>&quot;.', body_parameters->get( 'subcategory' ) );
@@ -2122,7 +2280,7 @@ post '/admin/manage_product_categories/subcategory/add' => require_role Admin =>
 
   flash success => sprintf( 'Successfully created Product Subcategory &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'subcategory' ) );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -2150,7 +2308,7 @@ get '/admin/manage_product_categories/subcategory/:product_subcategory_id/delete
   (
     not defined $product_subcategory
     or
-    ref( $product_subcategory ) ne 'IMGames::Schema::Result::ProductSubcategory'
+    ref( $product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
   )
   {
     flash error => sprintf( 'Unknown or invalid product subcategory.' );
@@ -2176,8 +2334,8 @@ get '/admin/manage_product_categories/subcategory/:product_subcategory_id/delete
 
   flash success => sprintf( 'Successfully deleted product subcategory &quot;<strong>%s</strong>&quot;.', $subcategory );
 
-  info sprintf( 'Deleted product subcategory >%s<, ID: >%s<, on %s', $subcategory, $product_subcategory_id, DateTime->now( time_zone => 'UTC' )->datetime );
-  my $logged = IMGames::Log->admin_log
+  info sprintf( 'Deleted product subcategory >%s<, ID: >%s<, on %s', $subcategory, $product_subcategory_id, DateTime->now( time_zone => 'America/New_York' )->datetime );
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -2205,7 +2363,7 @@ get '/admin/manage_product_categories/subcategory/:product_subcategory_id/edit' 
   (
     not defined $product_subcategory
     or
-    ref( $product_subcategory ) ne 'IMGames::Schema::Result::ProductSubcategory'
+    ref( $product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
   )
   {
     flash error => sprintf( 'Unknown or invalid product subcategory.' );
@@ -2229,7 +2387,7 @@ get '/admin/manage_product_categories/subcategory/:product_subcategory_id/edit' 
         { name => 'Manage Product Categories and Subcategories', link => '/admin/manage_product_categories' },
         { name => sprintf( 'Edit Product Subcategory (%s)', $product_subcategory->subcategory ), current => 1 },
       ],
-      subtitle => 'Manage Product Subcategories',
+      title => 'Manage Product Subcategories',
     };
 };
 
@@ -2285,7 +2443,7 @@ post '/admin/manage_product_categories/subcategory/:product_subcategory_id/updat
   my $product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->find( $product_subcategory_id );
   my $orig_product_subcategory = Clone::clone( $product_subcategory );
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   $product_subcategory->subcategory( body_parameters->get( 'subcategory' ) );
   $product_subcategory->category_id( body_parameters->get( 'category_id' ) );
   $product_subcategory->updated_on( $now );
@@ -2307,9 +2465,9 @@ post '/admin/manage_product_categories/subcategory/:product_subcategory_id/updat
     category_id => $orig_product_subcategory->category_id
   };
 
-  my $diffs = IMGames::Log->find_changes_in_data( old_data => $old, new_data => $new );
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -2351,7 +2509,7 @@ get '/admin/manage_featured_products' => require_role Admin => sub
       { name => 'Admin', link => '/admin' },
       { name => 'Manage Featured Products', current => 1 },
     ],
-    subtitle => 'Manage Featured Products',
+    title => 'Manage Featured Products',
   };
 };
 
@@ -2386,7 +2544,7 @@ post '/admin/manage_featured_products/update' => require_role Admin => sub
               product_subcategory_id => $form_input->{'product_subcategory_id_' . $2},
               expires_on             => ( $form_input->{'expires_on_' . $2} ) ? $form_input->{'expires_on_' . $2} : undef,
               created_on             => ( $form_input->{'created_on_' . $2} ) ? $form_input->{'created_on_' . $2}
-                                                                              : DateTime->today( time_zone => 'UTC' )->datetime,
+                                                                              : DateTime->today( time_zone => 'America/New_York' )->datetime,
             },
             { key => 'productid_subcategoryid' },
           );
@@ -2427,7 +2585,7 @@ get '/admin/manage_news' => require_role Admin => sub
   my @news = $SCHEMA->resultset( 'News' )->search(
     {},
     {
-      order_by => [ 'created_on' ],
+      order_by => [ 'timestamp', 'expires' ],
     },
   );
 
@@ -2442,7 +2600,7 @@ get '/admin/manage_news' => require_role Admin => sub
         { name => 'Admin', link => '/admin' },
         { name => 'Manage News', current => 1 },
       ],
-      subtitle => 'Manage News',
+      title => 'Manage News',
     }
 };
 
@@ -2463,7 +2621,7 @@ get '/admin/manage_news/add' => require_role Admin => sub
         { name => 'Manage News', link => '/admin/manage_news' },
         { name => 'Add New News Item', current => 1 },
       ],
-      subtitle => 'Add News',
+      title => 'Add News',
     },
 };
 
@@ -2478,33 +2636,18 @@ post '/admin/manage_news/create' => require_role Admin => sub
 {
   my $form_input = body_parameters->as_hashref;
 
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_add_news_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your News Article information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
-
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   my $new_news = $SCHEMA->resultset( 'News' )->create(
     {
-      title      => body_parameters->get( 'title' ),
-      content    => body_parameters->get( 'content' ),
-      user_id    => logged_in_user->id,
-      views      => 0,
-      created_on => $now,
+      title           => body_parameters->get( 'title' ),
+      blurb           => ( body_parameters->get( 'blurb' ) || undef ),
+      article         => body_parameters->get( 'article' ),
+      expires         => body_parameters->get( 'expires' ),
+      static          => 1,
+      priority        => 1,
+      user_account_id => logged_in_user->id,
+      views           => 0,
+      timestamp       => $now,
     },
   );
 
@@ -2512,15 +2655,32 @@ post '/admin/manage_news/create' => require_role Admin => sub
   (
     ! defined $new_news
     or
-    ref( $new_news ) ne 'IMGames::Schema::Result::News'
+    ref( $new_news ) ne 'QP::Schema::Result::News'
   )
   {
-    flash error => 'An error occurred and the news item could not be saved.';
+    flash( error => 'An error occurred and the news item could not be saved.' );
     redirect '/admin/manage_news';
   };
 
-  flash success => sprintf( 'Your new news item &quot;<strong>%s</strong>&quot; was saved.',
-                                body_parameters->get( 'title' ) );
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new news item >%s<, ID: >%s<, on %s', body_parameters->get( 'title' ), $new_news->id, $now );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new news item:<br>%s', join( '<br>', @fields ) ),
+  );
+
+  flash( success => sprintf( 'Your new news item &quot;<strong>%s</strong>&quot; was saved.',
+                                body_parameters->get( 'title' ) ) );
 
   redirect '/admin/manage_news';
 };
@@ -2542,10 +2702,10 @@ get '/admin/manage_news/:item_id/edit' => require_role Admin => sub
   (
     not defined $item
     or
-    ref( $item ) ne 'IMGames::Schema::Result::News'
+    ref( $item ) ne 'QP::Schema::Result::News'
   )
   {
-    flash error => 'Invalid or unknown news item to edit.';
+    flash( error => 'Invalid or unknown news item to edit.' );
     redirect '/admin/manage_news';
   }
 
@@ -2561,7 +2721,7 @@ get '/admin/manage_news/:item_id/edit' => require_role Admin => sub
         { name => 'Manage News', link => '/admin/manage_news' },
         { name => 'Edit News Item', current => 1 },
       ],
-      subtitle => 'Edit News',
+      title => 'Edit News',
     };
 };
 
@@ -2574,51 +2734,59 @@ Route to update a news item record. Requires Admin access.
 
 post '/admin/manage_news/:item_id/update' => require_role Admin => sub
 {
-  my $item_id    = route_parameters->get( 'item_id' );
-
-  my $form_input = body_parameters->as_hashref;
-
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_news_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your News Article information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
+  my $item_id = route_parameters->get( 'item_id' );
 
   my $item = $SCHEMA->resultset( 'News' )->find( $item_id );
+  my $orig_item = Clone::clone( $item );
 
   if
   (
     not defined $item
     or
-    ref( $item ) ne 'IMGames::Schema::Result::News'
+    ref( $item ) ne 'QP::Schema::Result::News'
   )
   {
-    flash error => 'Error: Cannot update news item - Invalid or unknown ID.';
+    flash( error => 'Error: Cannot update news item - Invalid or unknown ID.' );
     redirect '/admin/manage_news';
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   $item->title( body_parameters->get( 'title' ) );
-  $item->content( body_parameters->get( 'content' ) );
-  $item->updated_on( $now );
+  $item->article( body_parameters->get( 'article' ) );
+  $item->blurb( ( body_parameters->get( 'blurb' ) || undef ) );
+  $item->expires( body_parameters->get( 'expires' ) );
 
   $item->update();
 
-  flash success => sprintf( 'Successfully updated news item &quot;<strong>%s</strong>&quot;.',
-                                body_parameters->get( 'title' ) );
+  info sprintf( 'News article >%s< updated by %s on %s.', $item->title, logged_in_user->username, $now );
+
+  my $old =
+  {
+    title   => $orig_item->title,
+    article => $orig_item->article,
+    blurb   => $orig_item->blurb,
+    expires => $orig_item->expires,
+  };
+  my $new =
+  {
+    title   => body_parameters->get( 'title' ),
+    article => body_parameters->get( 'article' ),
+    blurb   => body_parameters->get( 'blurb' ),
+    expires => body_parameters->get( 'expires' ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'News article modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated news item &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'title' ) ) );
   redirect '/admin/manage_news';
 };
 
@@ -2639,7 +2807,7 @@ get '/admin/manage_news/:item_id/delete' => require_role Admin => sub
   (
     not defined $item
     or
-    ref( $item ) ne 'IMGames::Schema::Result::News'
+    ref( $item ) ne 'QP::Schema::Result::News'
   )
   {
     flash error => 'Error: Cannot delete news item - Invalid or unknown ID.';
@@ -2648,6 +2816,14 @@ get '/admin/manage_news/:item_id/delete' => require_role Admin => sub
 
   my $title = $item->title;
   $item->delete;
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'News Article &quot;%s&quot; deleted', $title ),
+  );
 
   flash success => sprintf( 'Successfully deleted news item &quot;<strong>%s</strong>&quot;.', $title );
   redirect '/admin/manage_news';
@@ -2665,7 +2841,7 @@ get '/admin/manage_events' => require_role Admin => sub
   my @events = $SCHEMA->resultset( 'Event' )->search(
     {},
     {
-      order_by => { -desc => [ 'start_date' ] },
+      order_by => { -desc => [ 'start_datetime' ] },
     }
   );
 
@@ -2680,7 +2856,7 @@ get '/admin/manage_events' => require_role Admin => sub
         { name => 'Admin', link => '/admin' },
         { name => 'Manage Events', current => 1 },
       ],
-      subtitle => 'Manage Events',
+      title => 'Manage Events',
     };
 };
 
@@ -2701,7 +2877,7 @@ get '/admin/manage_events/add' => require_role Admin => sub
         { name => 'Manage Events', link => '/admin/manage_events' },
         { name => 'Add New Calendar Event', current => 1 },
       ],
-      subtitle => 'Add Event',
+      title => 'Add Event',
     };
 };
 
@@ -2716,41 +2892,37 @@ post '/admin/manage_events/create' => require_role Admin => sub
 {
   my $form_input = body_parameters->as_hashref;
 
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_add_events_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your calendar event information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
-
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   my $new_event = $SCHEMA->resultset( 'Event' )->create
   (
     {
-      name       => body_parameters->get( 'name' ),
-      start_date => body_parameters->get( 'start_date' ),
-      end_date   => ( body_parameters->get( 'end_date' ) ) ? body_parameters->get( 'end_date' ) : body_parameters->get( 'start_date' ),
-      start_time => body_parameters->get( 'start_time' ),
-      end_time   => body_parameters->get( 'end_time' ),
-      color      => body_parameters->get( 'color' ),
-      url        => body_parameters->get( 'url' ),
-      created_on => $now,
+      title          => body_parameters->get( 'title' ),
+      description    => body_parameters->get( 'description' ),
+      start_datetime => body_parameters->get( 'start_datetime' ),
+      end_datetime   => body_parameters->get( 'end_datetime' ),
+      is_private     => ( ( body_parameters->get( 'is_private' ) == 1 ) ? 'true' : 'false' ),
+      event_type     => body_parameters->get( 'event_type' ),
     }
   );
 
-  flash success => sprintf( 'Calendar Event &quot;<strong>%s</strong>&quot; was successfully created.', body_parameters->get( 'name' ) );
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new calendar event >%s<, ID: >%s<, on %s', body_parameters->get( 'title' ), $new_event->id, $now );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new calendar event:<br>%s', join( '<br>', @fields ) ),
+  );
+
+  flash success => sprintf( 'Calendar Event &quot;<strong>%s</strong>&quot; was successfully created.', body_parameters->get( 'title' ) );
   redirect '/admin/manage_events';
 };
 
@@ -2771,7 +2943,7 @@ get '/admin/manage_events/:event_id/edit' => require_role Admin => sub
   (
     ! defined $event
     or
-    ref( $event ) ne 'IMGames::Schema::Result::Event'
+    ref( $event ) ne 'QP::Schema::Result::Event'
   )
   {
     flash error => 'Could not find the requested calendar event. Invalid or undefined event ID.';
@@ -2804,54 +2976,64 @@ post '/admin/manage_events/:event_id/update' => require_role Admin => sub
 {
   my $form_input = body_parameters->as_hashref;
 
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_event_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your calendar event information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
-
   my $event_id = route_parameters->get( 'event_id' );
 
   my $event = $SCHEMA->resultset( 'Event' )->find( $event_id );
+  my $orig_event = Clone::clone( $event );
 
   if
   (
     ! defined $event
     or
-    ref( $event ) ne 'IMGames::Schema::Result::Event'
+    ref( $event ) ne 'QP::Schema::Result::Event'
   )
   {
     flash error => 'Could not find the requested calendar event. Invalid or undefined event ID.';
     redirect '/admin/manage_events';
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
-  $event->name( body_parameters->get( 'name' ) );
-  $event->start_date( body_parameters->get( 'start_date' ) );
-  $event->end_date( ( body_parameters->get( 'end_date' ) ) ? body_parameters->get( 'end_date' ) : body_parameters->get( 'start_date' ) );
-  $event->start_time( body_parameters->get( 'start_time' ) );
-  $event->end_time( body_parameters->get( 'end_time' ) );
-  $event->color( body_parameters->get( 'color' ) );
-  $event->url( body_parameters->get( 'url' ) );
-  $event->updated_on( $now );
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $event->title( body_parameters->get( 'title' ) );
+  $event->start_datetime( body_parameters->get( 'start_datetime' ) );
+  $event->end_datetime( body_parameters->get( 'end_datetime' ) );
+  $event->description( ( body_parameters->get( 'description' ) // undef ) );
+  $event->is_private( ( body_parameters->get( 'is_private' ) == 1 ? 'true' : 'false' ) );
+  $event->event_type( body_parameters->get( 'event_type' ) );
   $event->update;
 
-  flash success => sprintf( 'Calendar Event &quot;<strong>%s</strong>&quot; has been successfully updated.', body_parameters->get( 'name' ) );
-  redirect '/admin/manage_events';
+  info sprintf( 'Calendar event >%s< updated by %s on %s.', $event->title, logged_in_user->username, $now );
 
+  my $old =
+  {
+    title          => $orig_event->title,
+    description    => $orig_event->description,
+    start_datetime => $orig_event->start_datetime,
+    end_datetime   => $orig_event->end_datetime,
+    is_private     => $orig_event->is_private,
+    event_type     => $orig_event->event_type,
+  };
+  my $new =
+  {
+    title          => body_parameters->get( 'title' ),
+    description    => body_parameters->get( 'description' ),
+    start_datetime => body_parameters->get( 'start_datetime' ),
+    end_datetime   => body_parameters->get( 'end_datetime' ),
+    is_private     => body_parameters->get( 'is_private' ),
+    event_type     => body_parameters->get( 'event_type' ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Calendar event modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash success => sprintf( 'Calendar Event &quot;<strong>%s</strong>&quot; has been successfully updated.', body_parameters->get( 'title' ) );
+  redirect '/admin/manage_events';
 };
 
 
@@ -2871,15 +3053,23 @@ get '/admin/manage_events/:event_id/delete' => require_role Admin => sub
   (
     ! defined $event
     or
-    ref( $event ) ne 'IMGames::Schema::Result::Event'
+    ref( $event ) ne 'QP::Schema::Result::Event'
   )
   {
     flash error => 'Could not find the requested calendar event. Invalid or undefined event ID.';
     redirect '/admin/manage_events';
   }
 
-  my $event_name = $event->name;
+  my $event_name = $event->title;
   $event->delete;
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Calendar Event &quot;%s&quot; deleted', $event_name ),
+  );
 
   flash success => sprintf( 'Calendar Event &quot;<strong>%s</strong>&quot; has been successfully deleted.', $event_name );
 
@@ -2904,6 +3094,7 @@ get '/admin/admin_logs' => require_role Admin => sub
 
   template 'admin_logs',
     {
+      title => 'Admin Logs',
       data =>
       {
         logs => \@logs,
@@ -2934,6 +3125,7 @@ get '/admin/user_logs' => require_role Admin => sub
 
   template 'user_logs',
     {
+      title => 'User Logs',
       data =>
       {
         logs => \@logs,
@@ -3037,7 +3229,7 @@ post '/admin/manage_users/create' => require_role Admin => sub
   }
 
   my $send_confirmation = ( body_parameters->get( 'confirmed' ) == 1 ) ? 1 : 0;
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
   # Create the user, and send the welcome e-mail.
   my $new_user = create_user(
@@ -3052,7 +3244,7 @@ post '/admin/manage_users/create' => require_role Admin => sub
                               birthdate     => body_parameters->get( 'birthdate' ),
                               confirmed     => ( defined body_parameters->get( 'confirmed' ) ? 1 : 0 ),
                               confirm_code  => ( defined body_parameters->get( 'confirmed' )
-                                                  ? undef : IMGames::Util->generate_random_string() ),
+                                                  ? undef : QP::Util->generate_random_string() ),
                               created_on    => $now,
                               email_welcome => $send_confirmation,
                             );
@@ -3093,7 +3285,7 @@ post '/admin/manage_users/create' => require_role Admin => sub
 
   info sprintf( 'Created new user account >%s<, ID: >%s<, on %s', body_parameters->get( 'username' ), $new_user->id, $now );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3169,7 +3361,7 @@ post '/admin/manage_users/:user_id/update' => require_role Admin => sub
   (
     not defined $user
     or
-    ref( $user ) ne 'IMGames::Schema::Result::User'
+    ref( $user ) ne 'QP::Schema::Result::User'
   )
   {
     warn sprintf( 'Invalid or undefined user_id when updating user account: >%s<', $user_id );
@@ -3197,7 +3389,7 @@ post '/admin/manage_users/:user_id/update' => require_role Admin => sub
     birthdate  => body_parameters->get( 'birthdate' ),
   );
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
   foreach my $key ( [ qw/ username first_name last_name email birthdate / ] )
   {
@@ -3243,9 +3435,9 @@ post '/admin/manage_users/:user_id/update' => require_role Admin => sub
     $pw_updated = ' Password updated.';
   };
 
-  my $userdiffs = IMGames::Log->find_changes_in_data( old_data => \%old, new_data => \%new );
+  my $userdiffs = QP::Log->find_changes_in_data( old_data => \%old, new_data => \%new );
 
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3275,7 +3467,7 @@ any '/admin/manage_users/:user_id/delete' => require_role Admin => sub
   $user->delete;
 
   flash success => sprintf( 'Successfully deleted User &quot;<strong>%s</strong>&quot;', $username );
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3328,7 +3520,7 @@ get '/admin/manage_roles/:role_id/edit' => require_role Admin => sub
   (
     not defined $role
     or
-    ref( $role ) ne 'IMGames::Schema::Result::Role'
+    ref( $role ) ne 'QP::Schema::Result::Role'
   )
   {
     warn sprintf( 'Invalid or undefined role ID: >%s<', $role_id );
@@ -3374,7 +3566,7 @@ post '/admin/manage_roles/:role_id/update' => require_role Admin => sub
   (
     not defined $role
     or
-    ref( $role ) ne 'IMGames::Schema::Result::Role'
+    ref( $role ) ne 'QP::Schema::Result::Role'
   )
   {
     warn sprintf( 'Invalid or undefined role ID: >%s<', $role_id );
@@ -3383,7 +3575,7 @@ post '/admin/manage_roles/:role_id/update' => require_role Admin => sub
   }
 
   my $orig_role = Clone::clone( $role );
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
   if ( $role->role ne body_parameters->get( 'role' ) )
   {
@@ -3394,7 +3586,7 @@ post '/admin/manage_roles/:role_id/update' => require_role Admin => sub
 
     flash success => sprintf( 'Role &quot;<strong>%s</strong>&quot; has been updated.', $role->role );
     info sprintf( 'Updated user role >%s< -> >%s<, on %s', $orig_role->role, $role->role, $now );
-    my $logged = IMGames::Log->admin_log
+    my $logged = QP::Log->admin_log
     (
       admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
       ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3453,7 +3645,7 @@ post '/admin/manage_roles/create' => require_role Admin => sub
     redirect '/admin/manage_roles/add';
   }
 
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   my $new_role = $SCHEMA->resultset( 'Role' )->create
   (
     {
@@ -3463,7 +3655,7 @@ post '/admin/manage_roles/create' => require_role Admin => sub
   );
 
   info sprintf( 'Created new user role >%s<, ID: >%s<, on %s', body_parameters->get( 'role' ), $new_role->id, $now );
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3492,7 +3684,7 @@ get '/admin/manage_roles/:role_id/delete' => require_role Admin => sub
   (
     not defined $role
     or
-    ref( $role ) ne 'IMGames::Schema::Result::Role'
+    ref( $role ) ne 'QP::Schema::Result::Role'
   )
   {
     warn sprintf( 'Invalid or undefined role ID: >%s<', $role_id );
@@ -3501,14 +3693,14 @@ get '/admin/manage_roles/:role_id/delete' => require_role Admin => sub
   }
 
   my $rolename = $role->role;
-  my $now = DateTime->now( time_zone => 'UTC' )->datetime;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
 
   $role->delete_related( 'userroles' );
   $role->delete;
 
   info sprintf( 'Deleted user role >%s<, on %s', $rolename, $now );
   flash success => sprintf( 'Successfully deleted User Role &quot;<strong>%s</strong>&quot;', $rolename );
-  my $logged = IMGames::Log->admin_log
+  my $logged = QP::Log->admin_log
   (
     admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
     ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
@@ -3518,5 +3710,17 @@ get '/admin/manage_roles/:role_id/delete' => require_role Admin => sub
 
   redirect '/admin/manage_roles';
 };
+
+
+=head2 permission_denied_page_handler
+
+Routine to display the 'permission_denied' screen when a User doesn't have the proper role.
+
+=cut
+
+sub permission_denied_page_handler
+{
+  template 'views/permission_denied.tt';
+}
 
 true;

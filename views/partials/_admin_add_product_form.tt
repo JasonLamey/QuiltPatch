@@ -1,0 +1,149 @@
+  <script type="text/javascript" src="/assets/js/vendor/ckeditor/ckeditor.js"></script>
+  <h2>Add New Product</h2>
+  <div class="text-left">
+    <form action="/admin/manage_products/add" method="post" id="admin_add_product_form">
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="name" class="text-right middle">Product Name:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <input type="text" max-length="255" name="name" placeholder="Stellar Chaos: The Gourmet Recipies Book"
+            data-validation="required length" data-validation-length="5-255" data-validation-error-msg="You need to enter a product name.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="product_type_id" class="text-right middle">Type:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <select name="product_type_id" data-validation="required" required data-validation-error-msg="Please select a product type.">
+            <option value=''>Select One</option>
+            [% FOREACH type IN data.product_types %]
+            <option value='[% type.id %]'>[% type.type %]</option>
+            [% END %]
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="product_subcategory_id" class="text-right middle">Subcategory:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <select name="product_subcategory_id" data-validation="required" required data-validation-error-msg="Please select a product subcategory.">
+            <option value=''>Select One</option>
+            [% FOREACH subcat IN data.product_subcategories %]
+            <option value='[% subcat.id %]'>[% subcat.subcategory %] ([% subcat.product_category.category %])</option>
+            [% END %]
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="base_price" class="text-right middle">Base Price:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <div class="input-group">
+            <span class="input-group-label">$</span>
+            <input class="input-group-field" type="number" max-length="7" name="base_price" placeholder="25.00" pattern="[0-9]{1,4}.[0-9]{2}"
+              data-validation="required number" data-validation-allowing="float" data-validation-error-msg="You need to define a base price for this product.">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="status" class="text-right middle">Status:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <select name="status" data-validation="required" data-validation-error-msg="You need to select a product status.">
+            <option value=''>Select One</option>
+            [% FOREACH status IN [ 'Unreleased', 'In Stock', 'Out of Stock', 'Discontinued' ] %]
+            <option value="[% status %]">[% status %]</option>
+            [% END %]
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="back_in_stock_date" class="text-right middle">Back In Stock Date:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <input type="text" placeholder="YYYY-MM-DD" name="back_in_stock_date" id="back_in_stock_date"
+            data-validation="required"
+            data-validation-depends-on="status"
+            data-validation-depends-on-value="Out of Stock"
+            data-validation-error-msg="A Back In Stock Date is required when 'Out of Stock' is selected."
+            data-validation-help="Only required when Status is 'Out of Stock'">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="sku" class="text-right middle">SKU:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <input type="text" max-length="15" name="sku" placeholder="SC1001"
+            data-validation="required length" data-validation-length="max15" data-validation-error-msg="You need to enter a product SKU.">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="intro" class="text-right">Intro Text:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <textarea name="intro" id="intro" placeholder="All your recipies for the Stellar Chaos Universe!" rows="2"
+            data-validation="required" data-validation-error-msg="Please set the intro text for this product."></textarea><br>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-2 medium-3 columns">
+          <label for="description" class="text-right">Description:</label>
+        </div>
+        <div class="small-10 medium-9 columns">
+          <textarea name="description" id="description" rows="4"
+            data-validation="required" data-validation-error-msg="Please set a description for this product."></textarea><br>
+        </div>
+      </div>
+
+      <div class="row column text-center">
+        <input type="submit" class="button" value="Save Product">
+      </div>
+
+    </form>
+    <script>
+      validate_add_product_form();
+      $('#back_in_stock_date').datetimepicker
+      (
+        {
+          timepicker : false,
+          format     : 'Y-m-d',
+          inline     : false,
+          defaultDate: new Date()
+        }
+      );
+    </script>
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'intro',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+          CKEDITOR.replace( 'description',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+
+  </div>

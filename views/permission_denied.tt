@@ -1,0 +1,7 @@
+        <div class="row column">
+          <div class="callout">
+            <h3><i class="fa fa-minus-circle fa-fw alert"></i> Permission Denied</h3>
+
+            <p>We apologize for the inconvenience, but the page you are trying to access is not available to you.</p>
+          </div>
+        </div>

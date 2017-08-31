@@ -1,0 +1,65 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row">
+      <div class="small-12 columns">
+        <h3>Manage News</h3>
+
+        <a href="/admin/manage_news/add" class="button">Add New News Item</a><br>
+
+        <table class="display" id="news_table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th width="20%">Posted</th>
+              <th width="10%">Author</th>
+              <th width="10%">Views</th>
+              <th width="20%">&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            [% IF NOT data.news.0.defined %]
+            <tr>
+              <td colspan="5" class="text-center">No News Items</td>
+            </tr>
+            [% ELSE %]
+              [% FOREACH item IN data.news %]
+            <tr>
+              <td>[% item.title %]</td>
+              <td class="dt-center">[% item.news_type %]</td>
+              <td>[% date.format( item.timestamp, format = datetime_format_short ) %]</td>
+              <td>[% item.user.username || 'Unknown' %]</td>
+              <td>[% item.views %]</td>
+              <td>
+                <a href="/admin/manage_news/[% item.id %]/edit" class="button tiny">Edit</a>
+                <button class="tiny alert button" onclick="promptForDelete( '[% item.title %]', '/admin/manage_news/[% item.id %]/delete' );">Delete</button>
+              </td>
+            </tr>
+              [% END %]
+            [% END %]
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#news_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 2, 'desc' ],
+      scrollY    : 500
+    }
+  );
+</script>

@@ -1,0 +1,104 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+  <div class="row column">
+    <div class="callout">
+
+[%# +-----------------+----------------------+------+-----+---------+----------------+
+    | id              | smallint(5) unsigned | NO   | PRI | NULL    | auto_increment |
+    | timestamp       | datetime             | YES  | MUL | NULL    |                |
+    | expires         | date                 | YES  | MUL | NULL    |                |
+    | title           | varchar(255)         | NO   |     |         |                |
+    | blurb           | text                 | YES  |     | NULL    |                |
+    | article         | text                 | YES  |     | NULL    |                |
+    | external_link   | varchar(255)         | YES  |     | NULL    |                |
+    | static          | tinyint(1)           | NO   | MUL | 0       |                |
+    | priority        | tinyint(1)           | NO   | MUL | 0       |                |
+    | news_type       | enum('QP','Bernina') | NO   | MUL | QP      |                |
+    | user_account_id | bigint(20) unsigned  | NO   | MUL | 0       |                |
+    +-----------------+----------------------+------+-----+---------+----------------+
+%]
+
+    <div class="row">
+      <div class="small-12 columns">
+
+        <h3>Edit News Item</h3>
+
+        <form action="/admin/manage_news/[% data.item.id %]/update" method="post" id="edit_news_item_form" data-abide novalidate>
+
+          <input type="hidden" name="priority" value="1">
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="title" class="text-right middle">Title: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="text" maxlength="255" name="title" id="title" placeholder="Very Important News Headline!" value="[% data.item.title.replace('"', '\'') %]" required>
+              <span class="form-error" data-form-error-for="title">Title is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="expires" class="text-right middle">Display Until: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <input type="hidden" name="static" value="1">
+              <input type="date" name="expires" id="expires" value="[% data.item.expires %]" required><br>
+              <span class="form-error" data-form-error-for="expires">Expires is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="blurb" class="text-right middle">Blurb:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="blurb" id="blurb">[% data.item.blurb %]</textarea><br>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="article" class="text-right middle">Article: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="article" id="article"
+              required>[% data.item.article %]</textarea><br>
+              <span class="form-error" data-form-error-for="article">Article is required.</span>
+            </div>
+          </div>
+
+          <div class="row column text-right">
+            <small><span class="subtle_text">Created On: [% date.format( data.item.timestamp, format = datetime_format_short ) %]
+            [% IF data.item.updated_on %] &brvbar; Last Updated On: [% date.format( data.item.updated_on, format = datetime_format_short ) %][% END %]</span></small>
+          </div>
+          <div class="row column text-center">
+            <button type="submit" form="edit_news_item_form" class="button">Update News Item</button>
+          </div>
+        </form>
+
+    </div>
+  </div>
+
+
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'blurb',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+          CKEDITOR.replace( 'article',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+  </div>
+</div>
