@@ -30,7 +30,7 @@
                 <ul>
                   <li><a href="/admin/manage_classes/groups">Manage Class Groups</a></li>
                   <li><a href="/admin/manage_classes/subgroups">Manage Class Subgroups</a></li>
-                  <li>Manage Classes</li>
+                  <li><a href="/admin/manage_classes/classes">Manage Classes</a></li>
                   <li><a href="/admin/manage_classes/teachers">Manage Teachers</a></li>
                 </ul>
               </div>

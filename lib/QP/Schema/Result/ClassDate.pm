@@ -83,6 +83,6 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key( 'id' );
 
-__PACKAGE__->belongs_to( class => 'QP::Schema::Result::Class', 'class_id' );
+__PACKAGE__->belongs_to( class => 'QP::Schema::Result::ClassInfo', 'class_id' );
 
 1;

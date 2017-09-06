@@ -7,7 +7,7 @@
                 <div class="row">
                   <div class="small-9 columns">
                 <h6>
-                  [% IF item.new %] <span class="new"><i class="fa fa-certificate fa-fw"></i>NEW!</span> [% END %]
+                  [% IF item.is_new %] <span class="new"><i class="fa fa-certificate fa-fw"></i>NEW!</span> [% END %]
                   [% item.title %]
                 </h6>
                   </div>

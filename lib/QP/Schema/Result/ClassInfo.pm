@@ -1,4 +1,4 @@
-package QP::Schema::Result::Class;
+package QP::Schema::Result::ClassInfo;
 
 use base qw/DBIx::Class::Core/;
 
@@ -8,38 +8,38 @@ __PACKAGE__->add_columns(
                           id =>
                           {
                             data_type         => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 0,
                             is_auto_increment => 1,
                           },
                           class_group_id =>
                           {
                             datatype          => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 0,
                           },
                           class_subgroup_id =>
                           {
                             datatype          => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 1,
                           },
                           teacher_id =>
                           {
                             datatype          => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 1,
                           },
                           secondary_teacher_id =>
                           {
                             datatype          => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 1,
                           },
                           tertiary_teacher_id =>
                           {
                             datatype          => 'integer',
-                            size              => 20,
+                            size              => 8,
                             is_nullable       => 1,
                           },
                           title =>
@@ -58,21 +58,21 @@ __PACKAGE__->add_columns(
                           {
                             data_type         => 'varchar',
                             size              => 255,
-                            is_nullable       => 0,
+                            is_nullable       => 1,
                             default_value     => undef,
                           },
                           fee =>
                           {
                             data_type         => 'varchar',
                             size              => 100,
-                            is_nullable       => 0,
+                            is_nullable       => 1,
                             default_value     => undef,
                           },
                           skill_level =>
                           {
                             data_type         => 'varchar',
                             size              => 255,
-                            is_nullable       => 0,
+                            is_nullable       => 1,
                             default_value     => undef,
                           },
                           is_also_embroidery =>
@@ -91,7 +91,7 @@ __PACKAGE__->add_columns(
                           {
                             data_type         => 'boolean',
                             is_nullable       => 0,
-                            default_value     => 1,
+                            default_value     => 0,
                           },
                           image_filename =>
                           {
@@ -125,7 +125,7 @@ __PACKAGE__->add_columns(
                             is_nullable       => 1,
                             default_value     => undef,
                           },
-                          new =>
+                          is_new =>
                           {
                             data_type         => 'boolean',
                             is_nullable       => 0,

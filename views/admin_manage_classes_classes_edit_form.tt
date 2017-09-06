@@ -1,0 +1,195 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+<div class="row column">
+  <div class="callout">
+    <h5>Edit Class - [% data.class.title %]</h5>
+
+    <form method="post" action="/admin/manage_classes/classes/[% data.class.id %]/update" data-abide novalidate>
+
+      <div class="row">
+        <div class="small-12 medium-6 columns">
+          <label for="title">Class Title <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+            <input type="text" name="title" value="[% data.class.title %]" required>
+            <span class="form-error">A class title is required.</span>
+          </label>
+          <label for="teacher_id">Teachers:
+            <select name="teacher_id">
+              <option value=''>Teacher 1: Select One</option>
+              [% FOREACH teacher IN data.teachers %]
+              <option value='[% teacher.id %]'[% IF teacher.id == data.class.teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              [% END %]
+            </select>
+            <select name="secondary_teacher_id">
+              <option value=''>Teacher 2: Select One If Needed</option>
+              [% FOREACH teacher IN data.teachers %]
+              <option value='[% teacher.id %]'[% IF teacher.id == data.class.secondary_teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              [% END %]
+            </select>
+            <select name="tertiary_teacher_id">
+              <option value=''>Teacher 3: Select One If Needed</option>
+              [% FOREACH teacher IN data.teachers %]
+              <option value='[% teacher.id %]'[% IF teacher.id == data.class.tertiary_teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              [% END %]
+            </select>
+          </label>
+        </div>
+
+        <div class="small-12 medium-6 columns">
+          <label for="class_group_id">Class Group <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+            <select name="class_group_id" required>
+              <option value=''>Select One</option>
+              [% FOREACH group IN data.groups %]
+              <option value='[% group.id %]'[% IF group.id == data.class.class_group_id %] selected[% END %]>[% group.name %]</option>
+              [% END %]
+            </select>
+            <span class="form-error">You must choose a class group for this class.</span>
+          </label>
+          <label for="class_subgroup_id">Class Subgroup:
+            <select name="class_subgroup_id">
+              <option value=''>Select One If Needed</option>
+              [% FOREACH subgroup IN data.subgroups %]
+              <option value='[% subgroup.id %]'[% IF subgroup.id == data.class.class_subgroup_id %] selected[% END %]>[% subgroup.subgroup %] ([% subgroup.group.name %])</option>
+              [% END %]
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-12 columns">
+          <label for="description">Description <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+            <textarea name="description" id="description" required>[% data.class.description %]</textarea>
+            <span class="form-error">You must provide a class description.</span><br>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-12 medium-6 columns">
+          <label for="num_sessions">Number of Sessions:
+            <select name="num_sessions">
+              <option value=''>Select One If Necessary</option>
+              [% FOREACH num IN ['1 Session','2 Sessions','3 Sessions','4 Sessions','5 Sessions','6 Sessions','7 Sessions','8 Sessions','9 Sessions','10 Sessions','11 Sessions','12 Sessions' ] %]
+              <option value='[% num %]'[% IF data.class.num_sessions.lower == num.lower %] selected[% END %]>[% num %]</option>
+              [% END %]
+            </select>
+          </label>
+          <label for="fee">Fee:
+            <input type="text" value="[% data.class.fee %]" name="fee" placeholder="$50">
+          </label>
+        </div>
+        <div class="small-12 medium-6 columns">
+          <label for="skill_level">Student Skill Level:
+            <select name="skill_level">
+              <option value=''>Select One If Necessary</option>
+              [% FOREACH skill_level IN ['All Levels','Beginner','Adv. Beginner','Adv. Beginner, Intermediate','Intermediate','Intermediate, Advanced','Advanced'] %]
+              <option value='[% skill_level %]'[% IF data.class.skill_level.lower == skill_level.lower %] selected[% END %]>[% skill_level %]</option>
+              [% END %]
+            </select>
+          </label>
+
+          <div class="row">
+            <div class="small-6 medium-4 columns">
+              <label for="is_new">Mark As New:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="is_new" id="new" value="1"[% IF data.class.is_new == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="new">
+                    <span class="show-for-sr">Mark As New</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+            <div class="small-6 medium-4 columns">
+              <label for="no_supply_list">No Supply List:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="no_supply_list" id="no_supply_list" value="1"[% IF data.class.no_supply_list == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="no_supply_list">
+                    <span class="show-for-sr">No Supply List</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+            <div class="small-6 medium-4 columns">
+              <label for="always_show">Always Show Class:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="always_show" id="always_show" value="1"[% IF data.class.always_show == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="always_show">
+                    <span class="show-for-sr">Always Show Class</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+
+            <div class="small-6 medium-4 columns">
+              <label for="show_club">Show On Club Page:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="show_club" id="show_club" value="1"[% IF data.class.show_club == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="show_club">
+                    <span class="show-for-sr">Show On Club Page</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+            <div class="small-6 medium-4 columns">
+              <label for="is_also_club">Is Also A Club:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="is_also_club" id="is_also_club" value="1"[% IF data.class.is_also_club == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="is_also_club">
+                    <span class="show-for-sr">Is Also A Club</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+            <div class="small-6 medium-4 columns">
+              <label for="is_also_embroidery">Is Also Embroidery:
+                <div class="switch">
+                  <input type="checkbox" class="switch-input" name="is_also_embroidery" id="is_also_embroidery" value="1"[% IF data.class.is_also_embroidery == 1 %] checked[% END %]>
+                  <label class="switch-paddle" for="is_also_embroidery">
+                    <span class="show-for-sr">Is Also Embroidery</span>
+                    <span class="switch-active" aria-hidden="true">Yes</span>
+                    <span class="switch-inactive" aria-hidden="true">No</span>
+                  </label>
+                </div>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-12 columns">
+          <button class="button" type="submit">Save</button>
+        </div>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+  $( document ).ready( function()
+    {
+      CKEDITOR.replace( 'description',
+        {
+          toolbarCanCollapse: true
+        }
+      );
+    }
+  );
+</script>
+

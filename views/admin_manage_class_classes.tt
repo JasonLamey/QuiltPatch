@@ -1,0 +1,64 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+
+    <div class="row column">
+      <h3>Manage Classes</h3>
+    </div>
+
+    <div class="row column">
+      <a href="/admin/manage_classes/classes/add" class="button">Create New Class</a>
+    </div>
+
+    <div class="row align-center">
+      <div class="small-12 columns">
+        <table class="display" id="classes_table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Group/<em>Subgroup</em></th>
+              <th width="10%">Fee</th>
+              <th>Sessions</th>
+              <th>&nbsp;</th>
+            </tr>
+          </thead>
+          <tbody>
+            [% FOREACH class IN data.classes %]
+            <tr>
+              <td>[% class.title %][% IF class.is_new == 1 %] <span class="new"><i class="fa fa-certificate fa-fw"></i></span> [% END %]</td>
+              <td>[% class.class_group.name %][% IF class.subgroup.subgroup.defined %] &mdash; <em>[% class.subgroup.subgroup %]</em>[% END %]</td>
+              <td>[% class.fee %]</td>
+              <td>[% class.num_sessions %]</td>
+              <td>
+                <a href="/admin/manage_classes/classes/[% class.id %]/dates" class="tiny button">Dates</a>
+                <a href="/admin/manage_classes/classes/[% class.id %]/files" class="tiny button">Files</a>
+                <a href="/admin/manage_classes/classes/[% class.id %]/edit" class="tiny button">Edit</a>
+                <a href="#" class="tiny alert button" onclick="promptForDelete( '[% class.title %]', '/admin/manage_classes/classes/[% class.id %]/delete' );">Delete</a>
+              </td>
+            </tr>
+            [% END %]
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  $('#classes_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 0, 'asc' ],
+      scrollY    : 1000
+    }
+  );
+</script>
+

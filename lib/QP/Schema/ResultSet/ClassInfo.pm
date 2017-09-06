@@ -1,4 +1,4 @@
-package QP::Schema::ResultSet::Class;
+package QP::Schema::ResultSet::ClassInfo;
 
 use Dancer2 appname => 'QP';
 
@@ -24,7 +24,7 @@ sub has_upcoming_classes
     }
   )->count;
 
-  warning sprintf( 'HAS_CURRENT_CLASSES COUNT = >%s<', $count );
+  #warning sprintf( 'HAS_CURRENT_CLASSES COUNT = >%s<', $count );
 
   return ( $count // 0 );
 }

@@ -351,7 +351,7 @@ get '/classes/:group_id' => sub
                                                       },
   );
 
-  my @classes = $SCHEMA->resultset( 'Class' )->search(
+  my @classes = $SCHEMA->resultset( 'ClassInfo' )->search(
                                                       {
                                                         'me.class_group_id' => $group_id,
                                                         -or =>
@@ -433,7 +433,7 @@ get '/clubs' => sub
                                                       },
   );
 
-  my @classes = $SCHEMA->resultset( 'Class' )->search(
+  my @classes = $SCHEMA->resultset( 'ClassInfo' )->search(
                                                       {
                                                         is_also_club => 1,
                                                         'dates.date' => { '>=' => $today->ymd },
@@ -471,7 +471,7 @@ Route to fetch the embroidery landing page.
 get '/embroidery' => sub
 {
   my $today   = DateTime->today( time_zone => 'America/New_York' );
-  my @classes = $SCHEMA->resultset( 'Class' )->search(
+  my @classes = $SCHEMA->resultset( 'ClassInfo' )->search(
                                                       {
                                                         is_also_embroidery => 1,
                                                         'dates.date' => { '>=' => $today->ymd },
@@ -515,7 +515,7 @@ post '/search' => sub
     redirect '/classes';
   }
 
-  my @classes = $SCHEMA->resultset( 'Class' )->search(
+  my @classes = $SCHEMA->resultset( 'ClassInfo' )->search(
                                                       {
                                                         -or =>
                                                         [
@@ -1899,6 +1899,7 @@ get '/admin/manage_classes/teachers/:teacher_id/edit' => require_role Admin => s
 
   my $teacher = $SCHEMA->resultset( 'Teacher' )->find( $teacher_id );
 
+
   template 'admin_manage_classes_teachers_edit_form',
       {
         data =>
@@ -2005,6 +2006,346 @@ get '/admin/manage_classes/teachers/:teacher_id/delete' => require_role Admin =>
   );
   redirect '/admin/manage_classes/teachers';
 };
+
+
+=head2 GET C</admin/manage_classes/classes>
+
+Route to Class management dashboard. Requires being logged in and of admin role.
+
+=cut
+
+get '/admin/manage_classes/classes' => require_role Admin => sub
+{
+  my @classes = $SCHEMA->resultset( 'ClassInfo' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'title' },
+                                                          }
+  );
+
+  template 'admin_manage_class_classes',
+  {
+    data =>
+    {
+      classes => \@classes,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Classes', current => 1 },
+    ],
+    title => 'Manage Classes',
+  };
+};
+
+
+=head2 GET C</admin/manage_classes/classes/add>
+
+Route to add new class form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_classes/classes/add' => require_role Admin => sub
+{
+  my @class_groups = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+  my @class_subgroups = $SCHEMA->resultset( 'ClassSubgroup' )->search( undef,
+                                                          {
+                                                            order_by =>
+                                                            {
+                                                              -asc =>
+                                                              [
+                                                                'class_group_id',
+                                                                'order_by',
+                                                              ]
+                                                            },
+                                                          }
+  );
+  my @teachers = $SCHEMA->resultset( 'Teacher' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_classes_classes_add_form',
+  {
+    data =>
+    {
+      groups    => \@class_groups,
+      subgroups => \@class_subgroups,
+      teachers  => \@teachers,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Classes', link => '/admin/manage_classes/classes' },
+      { name => 'Add New Class', current => 1 },
+    ],
+    title => 'Add New Class',
+  };
+};
+
+
+=head2 POST C</admin/manage_classes/classes/create>
+
+Route to save new class data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_classes/classes/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $class_exists = $SCHEMA->resultset( 'ClassInfo' )->search( { title => body_parameters->get( 'title' ) } );
+
+  if ( defined $class_exists and ref( $class_exists ) eq 'QP::Schema::Result::ClassInfo' )
+  {
+    flash error => sprintf( 'Class <strong>%s</strong> already exists.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  my $new_class = $SCHEMA->resultset( 'ClassInfo' )->create(
+    {
+      title                => body_parameters->get( 'title' ),
+      description          => body_parameters->get( 'description' ),
+      class_group_id       => body_parameters->get( 'class_group_id' ),
+      class_subgroup_id    => ( body_parameters->get( 'class_subgroup_id' )    ? body_parameters->get( 'class_subgroup_id' )    : undef ),
+      teacher_id           => ( body_parameters->get( 'teacher_id' )           ? body_parameters->get( 'teacher_id' )           : undef ),
+      secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
+      tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' )  ? body_parameters->get( 'tertiary_teacher_id' )  : undef ),
+      num_sessions         => ( body_parameters->get( 'num_sessions' )         ? body_parameters->get( 'num_sessions' )         : undef ),
+      fee                  => ( body_parameters->get( 'fee' )                  ? body_parameters->get( 'fee' )                  : undef ),
+      skill_level          => ( body_parameters->get( 'skill_level' )          ? body_parameters->get( 'skill_level' )          : undef ),
+      is_also_embroidery   => ( body_parameters->get( 'is_also_embroidery' )   ? body_parameters->get( 'is_also_embroidery' )   : 0 ),
+      is_also_club         => ( body_parameters->get( 'is_also_club' )         ? body_parameters->get( 'is_also_club' )         : 0 ),
+      show_club            => ( body_parameters->get( 'show_club' )            ? body_parameters->get( 'show_club' )            : 0 ),
+      no_supply_list       => ( body_parameters->get( 'no_supply_list' )       ? body_parameters->get( 'no_supply_list' )       : 0 ),
+      always_show          => ( body_parameters->get( 'always_show' )          ? body_parameters->get( 'always_show' )          : 0 ),
+      is_new               => ( body_parameters->get( 'is_new' )               ? body_parameters->get( 'is_new' )               : 0 ),
+      image_filename       => undef,
+      supply_list_filename => undef,
+      anchor               => undef,
+    }
+  );
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new class >%s<, ID: >%s<, on %s', body_parameters->get( 'title' ), $new_class->id, $now );
+
+  flash success => sprintf( 'Successfully created Class &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'title' ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new class <br>%s', join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_classes/classes';
+};
+
+
+=head2 AJAX C</admin/manage_classes/classes/:class_id/edit>
+
+Route for presenting the edit class subgroup form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/edit' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  my @class_groups = $SCHEMA->resultset( 'ClassGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+  my @class_subgroups = $SCHEMA->resultset( 'ClassSubgroup' )->search( undef,
+                                                          {
+                                                            order_by =>
+                                                            {
+                                                              -asc =>
+                                                              [
+                                                                'class_group_id',
+                                                                'order_by',
+                                                              ]
+                                                            },
+                                                          }
+  );
+  my @teachers = $SCHEMA->resultset( 'Teacher' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_classes_classes_edit_form',
+  {
+    data =>
+    {
+      class     => $class,
+      groups    => \@class_groups,
+      subgroups => \@class_subgroups,
+      teachers  => \@teachers,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Classes', link => '/admin/manage_classes/classes' },
+      { name => 'Edit Class', current => 1 },
+    ],
+    title => 'Edit Class',
+  };
+};
+
+
+=head2 POST C</admin/manage_classes/classes/:class_id/update>
+
+Route to send form data to for updating a class in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_classes/classes/:class_id/update' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class      = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+  my $orig_class = Clone::clone( $class );
+
+  if
+  (
+    not defined $class
+    or
+    ref( $class ) ne 'QP::Schema::Result::ClassInfo'
+  )
+  {
+    flash( error => 'Error: Cannot update class - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $class->class_group_id( body_parameters->get( 'class_group_id' ) ),
+  $class->class_subgroup_id( body_parameters->get( 'class_subgroup_id' ) ? body_parameters->get( 'class_subgroup_id' ) : undef ),
+  $class->teacher_id( body_parameters->get( 'teacher_id' ) ? body_parameters->get( 'teacher_id' ) : undef ),
+  $class->secondary_teacher_id( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
+  $class->tertiary_teacher_id( body_parameters->get( 'tertiary_teacher_id' ) ? body_parameters->get( 'tertiary_teacher_id' ) : undef ),
+  $class->title( body_parameters->get( 'title' ) ),
+  $class->description( body_parameters->get( 'description' ) ),
+  $class->num_sessions( body_parameters->get( 'num_sessions' ) ? body_parameters->get( 'num_sessions' ) : undef ),
+  $class->fee( body_parameters->get( 'fee' ) ? body_parameters->get( 'fee' ) : undef ),
+  $class->skill_level( body_parameters->get( 'skill_level' ) ? body_parameters->get( 'skill_level' ) : undef ),
+  $class->is_also_embroidery( body_parameters->get( 'is_also_embroidery' ) ? body_parameters->get( 'is_also_embroidery' ) : 0 ),
+  $class->is_also_club( body_parameters->get( 'is_also_club' ) ? body_parameters->get( 'is_also_club' ) : 0 ),
+  $class->show_club( body_parameters->get( 'show_club' ) ? body_parameters->get( 'show_club' ) : 0 ),
+  $class->no_supply_list( body_parameters->get( 'no_supply_list' ) ? body_parameters->get( 'no_supply_list' ) : 0 ),
+  $class->always_show( body_parameters->get( 'always_show' ) ? body_parameters->get( 'always_show' ) : 0 ),
+  $class->is_new( body_parameters->get( 'is_new' ) ? body_parameters->get( 'is_new' ) : 0 ),
+
+  $class->update();
+
+  info sprintf( 'Class >%s< updated by %s on %s.', $class->title, logged_in_user->username, $now );
+
+  my $old =
+  {
+    class_group_id       => $orig_class->class_group_id,
+    class_subgroup_id    => $orig_class->class_subgroup_id,
+    teacher_id           => $orig_class->teacher_id,
+    secondary_teacher_id => $orig_class->secondary_teacher_id,
+    tertiary_teacher_id  => $orig_class->tertiary_teacher_id,
+    title                => $orig_class->title,
+    description          => $orig_class->description,
+    num_sessions         => $orig_class->num_sessions,
+    fee                  => $orig_class->fee,
+    skill_level          => $orig_class->skill_level,
+    is_also_embroidery   => $orig_class->is_also_embroidery,
+    is_also_club         => $orig_class->is_also_club,
+    show_club            => $orig_class->show_club,
+    no_supply_list       => $orig_class->no_supply_list,
+    always_show          => $orig_class->always_show,
+    is_new               => $orig_class->is_new,
+  };
+  my $new =
+  {
+    class_group_id       => body_parameters->get( 'class_group_id' ),
+    class_subgroup_id    => ( body_parameters->get( 'class_subgroup_id' ) ? body_parameters->get( 'class_subgroup_id' ) : undef ),
+    teacher_id           => ( body_parameters->get( 'teacher_id' ) ? body_parameters->get( 'teacher_id' ) : undef ),
+    secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
+    tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' ) ? body_parameters->get( 'tertiary_teacher_id' ) : undef ),
+    title                => body_parameters->get( 'title' ),
+    description          => body_parameters->get( 'description' ),
+    num_sessions         => ( body_parameters->get( 'num_sessions' ) ? body_parameters->get( 'num_sessions' ) : undef ),
+    fee                  => ( body_parameters->get( 'fee' ) ? body_parameters->get( 'fee' ) : undef ),
+    skill_level          => ( body_parameters->get( 'skill_level' ) ? body_parameters->get( 'skill_level' ) : undef ),
+    is_also_embroidery   => ( body_parameters->get( 'is_also_embroidery' ) ? body_parameters->get( 'is_also_embroidery' ) : 0 ),
+    is_also_club         => ( body_parameters->get( 'is_also_club' ) ? body_parameters->get( 'is_also_club' ) : 0 ),
+    show_club            => ( body_parameters->get( 'show_club' ) ? body_parameters->get( 'show_club' ) : 0 ),
+    no_supply_list       => ( body_parameters->get( 'no_supply_list' ) ? body_parameters->get( 'no_supply_list' ) : 0 ),
+    always_show          => ( body_parameters->get( 'always_show' ) ? body_parameters->get( 'always_show' ) : 0 ),
+    is_new               => ( body_parameters->get( 'is_new' ) ? body_parameters->get( 'is_new' ) : 0 ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated class &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'title' ) ) );
+  redirect '/admin/manage_classes/classes';
+};
+
+
+=head2 GET C</admin/manage_classes/classes/:class_id/delete>
+
+Route to delete a class. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/delete' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+  my $class_title = $class->title;
+
+  if
+  (
+    not defined $class
+    or
+    ref( $class ) ne 'QP::Schema::Result::ClassInfo'
+  )
+  {
+    flash( error => 'Error: Cannot delete class - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  $class->delete;
+
+  flash success => sprintf( 'Successfully deleted Class <strong>%s</strong>.', $class_title );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class &quot;%s&quot; deleted', $class_title ),
+  );
+
+  redirect '/admin/manage_classes/classes';
+};
+
 
 
 =head2 POST C</admin/manage_products/:product_id/upload>

@@ -36,6 +36,6 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key( 'id' );
 
 __PACKAGE__->belongs_to( group   => 'QP::Schema::Result::ClassGroup', 'class_group_id' );
-__PACKAGE__->has_many(   classes => 'QP::Schema::Result::Class',      'class_subgroup_id' );
+__PACKAGE__->has_many(   classes => 'QP::Schema::Result::ClassInfo',  'class_subgroup_id' );
 
 1;

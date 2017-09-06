@@ -17,6 +17,7 @@ requires   "URI::Escape::JavaScript"  => "0.04";
 requires   "Date::Calc"               => "6.4";
 requires   "Date::Manip"              => "6.58";
 requires   "Emailesque"               => "1.26";
+requires   "jQuery::File::Upload"     => '0.30';
 
 on "test" => sub {
     requires "Test::More"            => "0";
