@@ -86,3 +86,26 @@ function promptForDelete( item, url )
   );
 }
 
+function setTimePickers()
+{
+  jQuery('#start_time1').datetimepicker({
+    datepicker:false,
+    format:'H:i',
+    step: 15
+  });
+  jQuery('#end_time1').datetimepicker({
+    datepicker:false,
+    format:'H:i',
+    step: 15
+  });
+  jQuery('#start_time2').datetimepicker({
+    datepicker:false,
+    format:'H:i',
+    step: 15
+  });
+  jQuery('#end_time2').datetimepicker({
+    datepicker:false,
+    format:'H:i',
+    step: 15
+  });
+}

@@ -2347,6 +2347,287 @@ get '/admin/manage_classes/classes/:class_id/delete' => require_role Admin => su
 };
 
 
+=head2 GET C</admin/manage_classes/classes/:class_id/dates>
+
+Route to Class Date management dashboard. Requires being logged in and of admin role.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/dates' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  my @dates = $class->dates;
+
+  template 'admin_manage_classes_class_dates',
+  {
+    data =>
+    {
+      class => $class,
+      dates => \@dates,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Classes', link => '/admin/manage_classes/classes' },
+      { name => 'Manage Class Dates', current => 1 },
+    ],
+    title => 'Manage Class Dates',
+  },
+  {
+    layout => 'ajax-modal',
+  };
+};
+
+
+=head2 GET C</admin/manage_classes/classes/:class_id/dates/add>
+
+Route to add new class dates form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/dates/add' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  template 'admin_manage_classes_class_dates_add_form',
+  {
+    data =>
+    {
+      class => $class,
+    },
+    title => 'Add New Class Dates',
+  },
+  {
+    layout => 'ajax-modal',
+  };
+};
+
+
+=head2 POST C</admin/manage_classes/classes/:class_id/dates/create>
+
+Route to save new class dates data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_classes/classes/:class_id/dates/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  if ( ! defined $class or ref( $class ) ne 'QP::Schema::Result::ClassInfo' )
+  {
+    flash error => sprintf( 'Cannot find class to add dates to.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  my $new_date_count = 0;
+  foreach my $datenum ( 1 .. 12 )
+  {
+    if
+    (
+      defined body_parameters->get( 'date' . $datenum ) 
+      &&
+      body_parameters->get( 'date' . $datenum ) ne ''
+    )
+    {
+      $class->create_related('dates',
+        {
+          date             => body_parameters->get( 'date' . $datenum ),
+          start_time1      => body_parameters->get( 'start_time1' ),
+          end_time1        => body_parameters->get( 'end_time1' ),
+          start_time2      => ( body_parameters->get( 'start_time2' )           ? body_parameters->get( 'start_time2' )           : undef ),
+          end_time2        => ( body_parameters->get( 'end_time2' )             ? body_parameters->get( 'end_time2' )             : undef ),
+          date_group       => ( body_parameters->get( 'date_group' )            ? body_parameters->get( 'date_group' )            : undef ),
+          date_group_order => ( body_parameters->get( 'date_group_order' )      ? body_parameters->get( 'date_group_order' )      : undef ),
+          is_holiday       => ( body_parameters->get( 'is_holiday' . $datenum ) ? body_parameters->get( 'is_holiday' . $datenum ) : 0 ),
+          session          => 'depricated field',
+        }
+      );
+      $new_date_count++;
+    }
+  }
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created %d new class dates for >%s<, ID: >%s<, on %s', $new_date_count, $class->title, $class->id, $now );
+
+  flash success => sprintf( 'Successfully created <strong>%d</strong> new dates for &quot;<strong>%s</strong>&quot;!', $new_date_count, $class->title );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new %d class dates for %s<br>%s', $new_date_count, $class->title, join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_classes/classes';
+};
+
+
+=head2 AJAX C</admin/manage_classes/classes/:class_id/dates/:date_id/edit>
+
+Route for presenting the edit class subgroup form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/dates/:date_id/edit' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+  my $date_id  = route_parameters->get( 'date_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  my @dates = $class->search_related( 'dates', { id => $date_id } );
+
+  template 'admin_manage_classes_class_dates_edit_form',
+  {
+    data =>
+    {
+      class     => $class,
+      cldate    => $dates[0],
+    },
+    title => 'Edit Class Date',
+  },
+  {
+    layout => 'ajax-modal',
+  };
+};
+
+
+=head2 POST C</admin/manage_classes/classes/:class_id/dates/:date_id/update>
+
+Route to send form data to for updating a class date in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_classes/classes/:class_id/dates/:date_id/update' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+  my $date_id  = route_parameters->get( 'date_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+  my @dates = $class->search_related( 'dates', { id => $date_id } );
+  my $date  = $dates[0];
+
+  if
+  (
+    not defined $date
+    or
+    ref( $date ) ne 'QP::Schema::Result::ClassDate'
+  )
+  {
+    flash( error => 'Error: Cannot update class date - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  my $orig_date = Clone::clone( $date );
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  $date->start_time1( body_parameters->get('start_time1') );
+  $date->end_time1( body_parameters->get('end_time1') );
+  $date->date( body_parameters->get('date') );
+  $date->start_time2( ( body_parameters->get('start_time2') ? body_parameters->get('start_time2') : undef ) );
+  $date->end_time2( ( body_parameters->get('end_time2') ? body_parameters->get('end_time2') : undef ) );
+  $date->is_holiday( ( body_parameters->get('is_holiday') ? body_parameters->get('is_holiday') : 0 ) );
+  $date->date_group( ( body_parameters->get('date_group') ? body_parameters->get('date_group') : undef ) );
+  $date->date_group_order( ( body_parameters->get('date_group_order') ? body_parameters->get('date_group_order') : undef ) );
+
+  $date->update();
+
+  info sprintf( 'Class date for >%s< updated by %s on %s.', $class->title, logged_in_user->username, $now );
+
+  my $old =
+  {
+    start_time1      => $orig_date->start_time1,
+    end_time1        => $orig_date->end_time1,
+    date             => $orig_date->date,
+    start_time2      => $orig_date->start_time2,
+    end_time2        => $orig_date->end_time2,
+    is_holiday       => $orig_date->is_holiday,
+    date_group       => $orig_date->date_group,
+    date_group_order => $orig_date->date_group_order,
+  };
+  my $new =
+  {
+    start_time1      => body_parameters->get('start_time1'),
+    end_time1        => body_parameters->get('end_time1'),
+    date             => body_parameters->get('date'),
+    start_time2      => ( body_parameters->get('start_time2') ? body_parameters->get('start_time2') : undef ),
+    end_time2        => ( body_parameters->get('end_time2') ? body_parameters->get('end_time2') : undef ),
+    is_holiday       => ( body_parameters->get('is_holiday') ? body_parameters->get('is_holiday') : 0 ),
+    date_group       => ( body_parameters->get('date_group') ? body_parameters->get('date_group') : undef ),
+    date_group_order => ( body_parameters->get('date_group_order') ? body_parameters->get('date_group_order') : undef ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class date modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated class date for &quot;<strong>%s</strong>&quot;.',
+                                $class->title ) );
+  redirect '/admin/manage_classes/classes';
+};
+
+
+=head2 GET C</admin/manage_classes/classes/:class_id/dates/:date_id/delete>
+
+Route to delete a class date. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/dates/:date_id/delete' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+  my $date_id  = route_parameters->get( 'date_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+  my $class_title = $class->title;
+
+  if
+  (
+    not defined $class
+    or
+    ref( $class ) ne 'QP::Schema::Result::ClassInfo'
+  )
+  {
+    flash( error => 'Error: Cannot delete class date - Invalid or unknown ID.' );
+    redirect '/admin/manage_classes/classes';
+  }
+
+  $class->delete_related( 'dates', { id => $date_id } );
+
+  flash success => sprintf( 'Successfully deleted Class Date for <strong>%s</strong>.', $class_title );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Class Date for &quot;%s&quot; deleted', $class_title ),
+  );
+
+  redirect '/admin/manage_classes/classes';
+};
+
 
 =head2 POST C</admin/manage_products/:product_id/upload>
 

@@ -32,7 +32,7 @@
               <td>[% class.fee %]</td>
               <td>[% class.num_sessions %]</td>
               <td>
-                <a href="/admin/manage_classes/classes/[% class.id %]/dates" class="tiny button">Dates</a>
+                <a href="/admin/manage_classes/classes/[% class.id %]/dates" class="tiny button" rel="modal:open">Dates</a>
                 <a href="/admin/manage_classes/classes/[% class.id %]/files" class="tiny button">Files</a>
                 <a href="/admin/manage_classes/classes/[% class.id %]/edit" class="tiny button">Edit</a>
                 <a href="#" class="tiny alert button" onclick="promptForDelete( '[% class.title %]', '/admin/manage_classes/classes/[% class.id %]/delete' );">Delete</a>

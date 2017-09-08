@@ -1,0 +1,35 @@
+[% USE date %]
+
+<div class="row column">
+  <h4>Manage Dates for &quot;[% data.class.title %]&quot;</h4>
+  <a href="/admin/manage_classes/classes/[% data.class.id %]/dates/add" class="button" rel="modal:open">Add New Dates</a>
+</div>
+<div class="row column">
+  <table id="dates_table" class="hover">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Start / End Times</th>
+        <th>Holiday</th>
+        <th>Date Group</th>
+        <th>&nbsp;</th>
+      </tr>
+    </thead>
+    <tbody>
+    [% FOREACH cldate IN data.dates.sort( 'date', 'start_time1' ).reverse %]
+      <tr>
+        <td>[% date.format(cldate.date _ ' ' _ cldate.start_time1, '%a, %b %d, %Y') %]</td>
+        <td>[% date.format(cldate.date _ ' ' _ cldate.start_time1, '%l:%M %p' ) %] &ndash; [% date.format(cldate.date _ ' ' _ cldate.end_time1, '%l:%M %p') %]
+            [% IF cldate.start_time2.defined %]<br>[% date.format(cldate.date _ ' ' _ cldate.start_time2, '%l:%M %p' ) %] &ndash; [% date.format(cldate.date _ ' ' _ cldate.end_time2, '%l:%M %p') %][% END %]</td>
+        <td class="text-center">[% IF cldate.is_holiday %]<span class="label success"><i class="fa fa-check-circle-o"></i> Yes</span>[% ELSE %]<span class="label alert"><i class="fa fa-times"></i> No</span>[% END %]</td>
+        <td>[% IF cldate.date_group %][% cldate.date_group %][% ELSE %]&mdash;[% END %]</td>
+        <td>
+          <a href="/admin/manage_classes/classes/[% data.class.id %]/dates/[% cldate.id %]/edit" class="tiny button" rel="modal:open">Edit</a>
+          <a href="/admin/manage_classes/classes/[% data.class.id %]/dates/[% cldate.id %]/delete" class="tiny button alert">Delete</a>
+        </td>
+      </tr>
+    [% END %]
+    </tbody>
+  </table>
+</div>
+

@@ -1,0 +1,74 @@
+[% USE date %]
+
+<div class="row column">
+  <h5>Add New Dates For &quot;[% data.class.title %]&quot;</h5>
+  <a href="/admin/manage_classes/classes/[% data.class.id %]/dates" class="button warning" rel="modal:open">Cancel</a>
+</div>
+
+<div class="row column">
+  <form method="post" action="/admin/manage_classes/classes/[% data.class.id %]/dates/create">
+
+    <div class="row callout secondary">
+      <div class="small-12 medium-6 columns">
+        <label for="start_time1">Start Time <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+          <input type="time" name="start_time1" id="start_time1" placeholder="10:00" required>
+          <span class="form-error">You must provide a starting time for this class.</span>
+        </label>
+      </div>
+      <div class="small-12 medium-6 columns">
+        <label for="end_time1">End Time <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+          <input type="time" name="end_time1" id="end_time1" placeholder="12:00" required>
+          <span class="form-error">You must provide a ending time for this class.</span>
+        </label>
+      </div>
+
+      <div class="small-12 medium-6 columns">
+        <label for="start_time2">Alternate Start Time:
+          <input type="time" name="start_time2" id="start_time2" placeholder="10:00">
+        </label>
+      </div>
+      <div class="small-12 medium-6 columns">
+        <label for="end_time2">Alternate End Time:
+          <input type="time" name="end_time2" id="end_time2" placeholder="12:00">
+        </label>
+      </div>
+      <div class="small-12">
+        <strong>Please note:</strong> All of the dates listed below will have these start and end times.
+      </div>
+    </div>
+
+    <div class="row callout medium-gray">
+      <div class="small-12 columns">
+        <strong>Put these dates in a Date Group? (Optional, happens occasionally but not frequently.)</strong>
+      </div>
+      <div class="small-12 medium-8 columns">
+        <label for="date_group">Date Group Name:
+          <input type="text" name="date_group" placeholder="Series 1">
+        </label>
+      </div>
+      <div class="small-12 medium-4 columns">
+        <label for="date_group_order">Date Group Order Number:
+          <input type="number" name="date_group_order" placeholder="1">
+        </label>
+      </div>
+    </div>
+
+    <div class="row callout">
+      [% FOREACH dateprompt IN [ 1 .. 12 ] %]
+      <div class="small-12 medium-6 columns">
+        <label for="date[% dateprompt %]">Date [% dateprompt %][% IF dateprompt == 1 %] <strong><i class="fa fa-asterisk fa-fw"></i></strong>[% END %]:
+          <input type="date" name="date[% dateprompt %]"[% IF dateprompt == 1 %] required[% END %]>
+          <span class="form-error">You must provide at least one date.</span>
+          <input type="checkbox" value="1" name="is_holiday[% dateprompt %]"> Mark as holiday
+        </label>
+      </div>
+      [% END %]
+    </div>
+
+    <div class="row column">
+      <button class="button" type="submit">Save Dates</button>
+    </div>
+
+  </form>
+</div>
+
