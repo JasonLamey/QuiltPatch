@@ -1,7 +1,5 @@
 package QP::Schema::Result::Role;
 
-use Dancer2 appname => 'QP';
-
 use strict;
 use warnings;
 

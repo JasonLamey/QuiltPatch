@@ -22,8 +22,8 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key( 'id' );
 
-__PACKAGE__->has_many( classes  => 'QP::Schema::Result::ClassInfo', 'teacher_id' );
-__PACKAGE__->has_many( classes2 => 'QP::Schema::Result::ClassInfo', 'secondary_teacher_id' );
-__PACKAGE__->has_many( classes3 => 'QP::Schema::Result::ClassInfo', 'tertiary_teacher_id' );
+__PACKAGE__->has_many( 'classteachers' => 'QP::Schema::Result::ClassTeacher', 'teacher_id' );
+
+__PACKAGE__->many_to_many( 'classes'   => 'classteachers', 'class', { order_by => { -asc => 'title' } } );
 
 1;

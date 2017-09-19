@@ -1,6 +1,5 @@
 package QP::Schema::Result::AdminLog;
 
-use Dancer2 appname => 'QP';
 use base 'DBIx::Class::Core';
 
 use strict;

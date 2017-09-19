@@ -1,12 +1,7 @@
 package QP::Schema::Result::UserRole;
 
-use Dancer2 appname => 'QP';
-
 use strict;
 use warnings;
-
-# QP modules
-use QP::Schema::Result::UserRole;
 
 # Third Party modules
 use base 'DBIx::Class::Core';
@@ -15,7 +10,7 @@ our $VERSION = '1.0';
 
 =head1 NAME
 
-QP::PackageName
+QP::Schema::Result::UserRole
 
 
 =head1 AUTHOR

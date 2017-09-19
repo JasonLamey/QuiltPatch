@@ -41,7 +41,15 @@
                     [% item.skill_level %]
                   </div>
                   <div class="small-6 medium-5 columns">
-                    [% IF item.teacher.defined %]Instructor, <a href="/classes/by_teacher#[% item.teacher_id %]">[% item.teacher.name %]</a>[% IF item.teacher2.defined %], <a href="/classes/by_teacher#[% item.secondary_teacher_id %]">[% item.teacher2.name %]</a>[% IF item.teacher3.defined %], <a href="/classses/by_teacher#[% item.tertiary_teacher_id %]">[% item.teacher3.name %]</a>[% END %][% END %][% END %]
+                    [% teacher_count = 1 %]
+                    [% IF item.classteachers.keys.size == 3 %]
+                    Instructor: <a href="/classes/by_teacher#[% item.classteachers.teacher.id %]">[% item.classteachers.teacher.name %]</a>
+                    [% ELSE %]
+                      [% FOREACH classteacher IN item.classteachers.sort('sort_order') %]
+                        [% IF teacher_count == 1 %]Instructor: [% ELSE %], [% END %]<a href="/classes/by_teacher#[% classteacher.teacher.id %]">[% classteacher.teacher.name %]</a>
+                        [% teacher_count = teacher_count + 1 %]
+                      [% END %]
+                    [% END %]
                   </div>
                 </div>
 

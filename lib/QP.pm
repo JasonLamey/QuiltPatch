@@ -15,6 +15,7 @@ use DateTime;
 use URI::Escape::JavaScript;
 use DBICx::Sugar;
 use Clone;
+use Array::Utils;
 
 use QP::Log;
 use QP::Mail;
@@ -31,7 +32,7 @@ const my $ADMIN_SESSION_EXPIRE_TIME => 600;    # 10 minutes in seconds.
 const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensible realm
 const my $DATA_FORM_VALIDATOR => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
 
-$SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
+$SCHEMA->storage->debug(0); # Turns on DB debuging. Turn off for production.
 
 hook before_template_render => sub
 {
@@ -296,7 +297,6 @@ get '/classes/by_teacher' => sub
                                                               { SUBSTRING_INDEX => [ 'me.name', "' '", -1 ], -as => 'last_name' },
                                                               { SUBSTRING_INDEX => [ 'me.name', "' '", 1 ], -as => 'first_name' },
                                                             ],
-                                                            prefetch => [ 'classes', 'classes2', 'classes3' ],
                                                             order_by =>
                                                             {
                                                               -asc => [ 'last_name, first_name' ],
@@ -363,7 +363,7 @@ get '/classes/:group_id' => sub
                                                       {
                                                         prefetch =>
                                                         [
-                                                          'dates',
+                                                          'dates', 'classteachers'
                                                         ],
                                                         order_by =>
                                                         {
@@ -2112,9 +2112,9 @@ post '/admin/manage_classes/classes/create' => require_role Admin => sub
       description          => body_parameters->get( 'description' ),
       class_group_id       => body_parameters->get( 'class_group_id' ),
       class_subgroup_id    => ( body_parameters->get( 'class_subgroup_id' )    ? body_parameters->get( 'class_subgroup_id' )    : undef ),
-      teacher_id           => ( body_parameters->get( 'teacher_id' )           ? body_parameters->get( 'teacher_id' )           : undef ),
-      secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
-      tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' )  ? body_parameters->get( 'tertiary_teacher_id' )  : undef ),
+      #teacher_id           => ( body_parameters->get( 'teacher_id' )           ? body_parameters->get( 'teacher_id' )           : undef ),
+      #secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
+      #tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' )  ? body_parameters->get( 'tertiary_teacher_id' )  : undef ),
       num_sessions         => ( body_parameters->get( 'num_sessions' )         ? body_parameters->get( 'num_sessions' )         : undef ),
       fee                  => ( body_parameters->get( 'fee' )                  ? body_parameters->get( 'fee' )                  : undef ),
       skill_level          => ( body_parameters->get( 'skill_level' )          ? body_parameters->get( 'skill_level' )          : undef ),
@@ -2129,6 +2129,27 @@ post '/admin/manage_classes/classes/create' => require_role Admin => sub
       anchor               => undef,
     }
   );
+
+  my $order = 1;
+  foreach my $teacher ( 'teacher_id', 'secondary_teacher_id', 'tertiary_teacher_id' )
+  {
+    debug sprintf( 'Looking for %s', $teacher );
+    if
+    (
+      defined body_parameters->get( $teacher )
+      and
+      int( body_parameters->get( $teacher ) ) > 0
+    )
+    {
+      my $teacher_to_add = $SCHEMA->resultset( 'Teacher' )->find( body_parameters->get( $teacher ) );
+      debug sprintf( 'TEACHER TO ADD: %d %s', body_parameters->get( $teacher ), $teacher_to_add->name );
+      if ( defined $teacher_to_add and ref( $teacher_to_add ) eq 'QP::Schema::Result::Teacher' )
+      {
+        $new_class->add_to_teachers( $teacher_to_add, { sort_order => $order } );
+      }
+    }
+    $order++;
+  }
 
   my $fields = body_parameters->as_hashref;
   my @fields = ();
@@ -2231,12 +2252,44 @@ post '/admin/manage_classes/classes/:class_id/update' => require_role Admin => s
     redirect '/admin/manage_classes/classes';
   }
 
+  # See if any teachers have changed.
+  my @classteachers = $class->classteachers;
+  my @clteachers = map { $_->teacher_id } @classteachers;
+  my @old_teachers = (
+                        body_parameters->get( 'teacher_id' ),
+                        body_parameters->get( 'secondary_teacher_id' ),
+                        body_parameters->get( 'tertiary_teacher_id' )
+  );
+
+  my @changed_teachers = Array::Utils::array_diff( @clteachers, @old_teachers );
+  debug sprintf( 'Changed Teachers: %s', Data::Dumper::Dumper( @changed_teachers ) );
+
+  if ( scalar( @changed_teachers ) > 0 )
+  {
+    $class->delete_related( 'classteachers' );
+    my $t_count = 1;
+    foreach my $teacher_id ( 'teacher_id', 'secondary_teacher_id', 'tertiary_teacher_id' )
+    {
+      debug sprintf( 'Looking for: %s', $teacher_id );
+      if
+      (
+        defined body_parameters->get( $teacher_id )
+        and
+        int( body_parameters->get( $teacher_id ) ) > 0
+      )
+      {
+        my $teacher_to_add = $SCHEMA->resultset( 'Teacher' )->find( body_parameters->get( $teacher_id ) );
+        debug sprintf( 'TEACHER TO ADD: %d %s', body_parameters->get( $teacher_id ), $teacher_to_add->name );
+        my %link_vals = ( sort_order => $t_count );
+        $class->add_to_teachers( $teacher_to_add, \%link_vals );
+      }
+      $t_count++;
+    }
+  }
+
   my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
   $class->class_group_id( body_parameters->get( 'class_group_id' ) ),
   $class->class_subgroup_id( body_parameters->get( 'class_subgroup_id' ) ? body_parameters->get( 'class_subgroup_id' ) : undef ),
-  $class->teacher_id( body_parameters->get( 'teacher_id' ) ? body_parameters->get( 'teacher_id' ) : undef ),
-  $class->secondary_teacher_id( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
-  $class->tertiary_teacher_id( body_parameters->get( 'tertiary_teacher_id' ) ? body_parameters->get( 'tertiary_teacher_id' ) : undef ),
   $class->title( body_parameters->get( 'title' ) ),
   $class->description( body_parameters->get( 'description' ) ),
   $class->num_sessions( body_parameters->get( 'num_sessions' ) ? body_parameters->get( 'num_sessions' ) : undef ),
@@ -2257,9 +2310,6 @@ post '/admin/manage_classes/classes/:class_id/update' => require_role Admin => s
   {
     class_group_id       => $orig_class->class_group_id,
     class_subgroup_id    => $orig_class->class_subgroup_id,
-    teacher_id           => $orig_class->teacher_id,
-    secondary_teacher_id => $orig_class->secondary_teacher_id,
-    tertiary_teacher_id  => $orig_class->tertiary_teacher_id,
     title                => $orig_class->title,
     description          => $orig_class->description,
     num_sessions         => $orig_class->num_sessions,
@@ -2276,9 +2326,6 @@ post '/admin/manage_classes/classes/:class_id/update' => require_role Admin => s
   {
     class_group_id       => body_parameters->get( 'class_group_id' ),
     class_subgroup_id    => ( body_parameters->get( 'class_subgroup_id' ) ? body_parameters->get( 'class_subgroup_id' ) : undef ),
-    teacher_id           => ( body_parameters->get( 'teacher_id' ) ? body_parameters->get( 'teacher_id' ) : undef ),
-    secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
-    tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' ) ? body_parameters->get( 'tertiary_teacher_id' ) : undef ),
     title                => body_parameters->get( 'title' ),
     description          => body_parameters->get( 'description' ),
     num_sessions         => ( body_parameters->get( 'num_sessions' ) ? body_parameters->get( 'num_sessions' ) : undef ),
@@ -2331,6 +2378,9 @@ get '/admin/manage_classes/classes/:class_id/delete' => require_role Admin => su
     flash( error => 'Error: Cannot delete class - Invalid or unknown ID.' );
     redirect '/admin/manage_classes/classes';
   }
+
+  $class->delete_related( 'classteachers' );
+  $class->delete_related( 'dates' );
 
   $class->delete;
 

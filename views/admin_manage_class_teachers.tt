@@ -8,17 +8,24 @@
       <a href="/admin/manage_classes/teachers/add" class="button notice" rel="modal:open">Create New Teacher</a>
     </div>
 
+    <div class="row column">
+      <table class="hover">
+        <thead>
+          <th>Teacher</th>
+          <th>&nbsp;</th>
+        </thead>
+        <tbody>
     [% FOREACH teacher IN data.teachers %]
-    <div class="row">
-      <div class="small-6 columns">
-      [% teacher.name %]
-      </div>
-      <div class="small-6 columns">
-        <a href="/admin/manage_classes/teachers/[% teacher.id %]/edit" class="button tiny notice" rel="modal:open">Edit</a>
-        <button class="button tiny alert" onclick="promptForDelete( '[% teacher.name %]', '/admin/manage_classes/teachers/[% teacher.id %]/delete' );">Delete</button>
-      </div>
-    </div>
+        <tr>
+            <td>[% teacher.name %]</td>
+            <td><a href="/admin/manage_classes/teachers/[% teacher.id %]/edit" class="button tiny notice" rel="modal:open">Edit</a>
+                <button class="button tiny alert" onclick="promptForDelete( '[% teacher.name %]', '/admin/manage_classes/teachers/[% teacher.id %]/delete' );">Delete</button></td>
+          </tr>
     [% END %]
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 

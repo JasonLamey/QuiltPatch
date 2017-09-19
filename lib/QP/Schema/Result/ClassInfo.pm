@@ -135,12 +135,12 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key( 'id' );
 
-__PACKAGE__->belongs_to( teacher     => 'QP::Schema::Result::Teacher',       'teacher_id' );
-__PACKAGE__->belongs_to( teacher2    => 'QP::Schema::Result::Teacher',       'secondary_teacher_id' );
-__PACKAGE__->belongs_to( teacher3    => 'QP::Schema::Result::Teacher',       'tertiary_teacher_id' );
-__PACKAGE__->belongs_to( class_group => 'QP::Schema::Result::ClassGroup',    'class_group_id' );
-__PACKAGE__->belongs_to( subgroup    => 'QP::Schema::Result::ClassSubgroup', 'class_subgroup_id' );
+__PACKAGE__->belongs_to( 'class_group' => 'QP::Schema::Result::ClassGroup',    'class_group_id' );
+__PACKAGE__->belongs_to( 'subgroup'    => 'QP::Schema::Result::ClassSubgroup', 'class_subgroup_id' );
 
-__PACKAGE__->has_many( dates => 'QP::Schema::Result::ClassDate', 'class_id' );
+__PACKAGE__->has_many( 'dates'         => 'QP::Schema::Result::ClassDate',    'class_id' );
+__PACKAGE__->has_many( 'classteachers' => 'QP::Schema::Result::ClassTeacher', 'class_id', { order_by => { -asc => 'sort_order' } } );
+
+__PACKAGE__->many_to_many( 'teachers'  => 'classteachers', 'teacher' );
 
 1;
