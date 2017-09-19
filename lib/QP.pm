@@ -32,7 +32,7 @@ const my $ADMIN_SESSION_EXPIRE_TIME => 600;    # 10 minutes in seconds.
 const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensible realm
 const my $DATA_FORM_VALIDATOR => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
 
-$SCHEMA->storage->debug(0); # Turns on DB debuging. Turn off for production.
+$SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
 
 hook before_template_render => sub
 {
@@ -2112,9 +2112,6 @@ post '/admin/manage_classes/classes/create' => require_role Admin => sub
       description          => body_parameters->get( 'description' ),
       class_group_id       => body_parameters->get( 'class_group_id' ),
       class_subgroup_id    => ( body_parameters->get( 'class_subgroup_id' )    ? body_parameters->get( 'class_subgroup_id' )    : undef ),
-      #teacher_id           => ( body_parameters->get( 'teacher_id' )           ? body_parameters->get( 'teacher_id' )           : undef ),
-      #secondary_teacher_id => ( body_parameters->get( 'secondary_teacher_id' ) ? body_parameters->get( 'secondary_teacher_id' ) : undef ),
-      #tertiary_teacher_id  => ( body_parameters->get( 'tertiary_teacher_id' )  ? body_parameters->get( 'tertiary_teacher_id' )  : undef ),
       num_sessions         => ( body_parameters->get( 'num_sessions' )         ? body_parameters->get( 'num_sessions' )         : undef ),
       fee                  => ( body_parameters->get( 'fee' )                  ? body_parameters->get( 'fee' )                  : undef ),
       skill_level          => ( body_parameters->get( 'skill_level' )          ? body_parameters->get( 'skill_level' )          : undef ),
@@ -2676,6 +2673,101 @@ get '/admin/manage_classes/classes/:class_id/dates/:date_id/delete' => require_r
   );
 
   redirect '/admin/manage_classes/classes';
+};
+
+
+=head2 GET C</admin/manage_newsletter>
+
+Route for updating/editing the newsletter from Leslie.  Require the user is an Admin.
+
+=cut
+
+get '/admin/manage_newsletter' => require_role Admin => sub
+{
+  my $newsletter = $SCHEMA->resultset( 'Newsletter' )->search( undef,
+    {
+      order_by => { -desc => 'created_at' },
+      rows     => 1,
+    }
+  )->single();
+
+  template 'admin_manage_newsletter_edit_form',
+  {
+    data =>
+    {
+      newsletter => $newsletter,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => "Manage Leslie's Newsletter", current => 1 },
+    ],
+    title => "Manage Leslie's Newsletter",
+  }
+};
+
+
+=head2 POST C</admin/manage_newsletter/:newsletter_id/update>
+
+Route to send form data to for updating a newsletter in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_newsletter/:newsletter_id/update' => require_role Admin => sub
+{
+  my $newsletter_id = route_parameters->get( 'newsletter_id' );
+
+  my $newsletter = $SCHEMA->resultset( 'Newsletter' )->find( $newsletter_id );
+
+  if
+  (
+    not defined $newsletter
+    or
+    ref( $newsletter ) ne 'QP::Schema::Result::Newsletter'
+  )
+  {
+    flash( error => 'Error: Cannot update newsletter - Invalid or unknown ID.' );
+    redirect '/admin/manage_newsletter';
+  }
+
+  my $orig_newsletter = Clone::clone( $newsletter );
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  $newsletter->body( body_parameters->get('body') );
+  $newsletter->title( ( body_parameters->get('title') ? body_parameters->get('title') : undef ) );
+  $newsletter->postscript( ( body_parameters->get('postscript') ? body_parameters->get('postscript') : undef ) );
+  $newsletter->updated_at( $now );
+
+  $newsletter->update();
+
+  info sprintf( 'Newsletter updated by %s on %s.', logged_in_user->username, $now );
+
+  my $old =
+  {
+    body       => $orig_newsletter->body,
+    title      => $orig_newsletter->title,
+    postscript => $orig_newsletter->postscript,
+  };
+  my $new =
+  {
+    body       => body_parameters->get('body'),
+    title      => ( body_parameters->get('title')      ? body_parameters->get('title')      : undef ),
+    postscript => ( body_parameters->get('postscript') ? body_parameters->get('postscript') : undef ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Newsletter modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => 'Successfully updated Newsletter.' );
+  redirect '/admin/manage_newsletter';
 };
 
 

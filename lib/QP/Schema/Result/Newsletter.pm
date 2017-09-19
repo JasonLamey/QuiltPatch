@@ -24,6 +24,12 @@ __PACKAGE__->add_columns(
                             data_type         => 'text',
                             is_nullable       => 0,
                           },
+                          postscript =>
+                          {
+                            data_type         => 'text',
+                            is_nullable       => 1,
+                            default_value     => undef,
+                          },
                           created_at =>
                           {
                             data_type         => 'datetime',

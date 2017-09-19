@@ -128,7 +128,7 @@
   border-radius: 5px; }
 
 .index-format p {
-  text-indent: 2rem; }
+  /* text-indent: 2rem; */ }
 
 .article-row {
   background-color: #eaead6;

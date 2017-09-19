@@ -62,15 +62,14 @@
             <div class="index-format callout">
               <h4>Leslie's Letter</h4>
               <img src="/images/LesliePortrait-145w.jpg" alt="Leslie Pfeifer" title="Leslie Pfeifer">
-              [% data.newsletter.body.replace('\n', '<br>') %]
+              [% data.newsletter.body %]
 
               <div class="row">
                 <div class="small-4 medium-4 columns">
                   <div class="letter-signature"><img src="/images/LeslieSignature.gif" alt="Leslie Pfeifer"></div>
                 </div>
                 <div class="small-8 medium-8 columns">
-                  P.S. Don't forget the Quilters Unlimited Show the first weekend in June.<br>
-                  <a href="http://www.quiltersunlimited.org" target="_blank">www.quiltersunlimited.org</a><!-- remove this PS with next newsletter -->
+                  [% data.newsletter.postscript %]
                 </div>
               </div>
             </div>

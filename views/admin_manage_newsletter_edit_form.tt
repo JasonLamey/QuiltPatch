@@ -1,0 +1,74 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<script type="text/javascript" src="/js/vendor/ckeditor/ckeditor.js"></script>
+
+  <div class="row column">
+    <div class="callout">
+
+    <div class="row">
+      <div class="small-12 columns">
+
+        <h3>Edit Leslie's Newsletter</h3>
+
+        <form action="/admin/manage_newsletter/[% data.newsletter.id %]/update" method="post" id="edit_newsletter" data-abide novalidate>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="title" class="text-right middle">Title:</label>
+            </div>
+            <div class="small-10 columns">
+              <input type="text" maxlength="255" name="title" id="title" placeholder="Happy Spring! (optional)" value="[% data.newsletter.title %]">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="body" class="text-right middle">Body: <strong><i class="fa fa-asterisk fa-fw"></i></strong></label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="body" id="body" required>[% data.newsletter.body %]</textarea><br>
+              <span class="form-error" data-form-error-for="body">The body of the newsletter is required.</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-2 columns">
+              <label for="postscript" class="text-right middle">Postscript:</label>
+            </div>
+            <div class="small-10 columns">
+              <textarea name="postscript" id="article">[% data.newsletter.postscript %]</textarea><br>
+            </div>
+          </div>
+
+          <div class="row column text-right">
+            <small><span class="subtle_text">Created On: [% date.format( data.newsletter.created_at, format = datetime_format_short ) %]
+            [% IF data.newsletter.updated_at %] &brvbar; Last Updated On: [% date.format( data.newsletter.updated_at, format = datetime_format_short ) %][% END %]</span></small>
+          </div>
+          <div class="row column text-center">
+            <button type="submit" form="edit_newsletter" class="button">Update Newsletter</button>
+          </div>
+        </form>
+
+    </div>
+  </div>
+
+
+    <script>
+      $( document ).ready( function()
+        {
+          CKEDITOR.replace( 'body',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+          CKEDITOR.replace( 'postscript',
+            {
+              toolbarCanCollapse: true
+            }
+          );
+        }
+      );
+    </script>
+  </div>
+</div>
