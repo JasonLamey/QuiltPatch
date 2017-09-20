@@ -1,0 +1,38 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h4>Manage Book Club Dates</h4>
+    <a href="/admin/manage_book_club/add" class="button">Add New Date</a>
+  </div>
+</div>
+
+<div class="row column">
+  <div class="callout">
+    <table id="dates_table" class="hover">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Book</th>
+          <th>Author</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+      [% FOREACH bcdate IN data.dates.sort( 'date' ).reverse %]
+        <tr>
+          <td>[% date.format(bcdate.date _ ' 00:00:00', '%a, %b %d, %Y') %]</td>
+          <td>[% bcdate.book %]</td>
+          <td>[% bcdate.author %]</td>
+          <td>
+            <a href="/admin/manage_book_club/[% bcdate.id %]/edit" class="tiny button">Edit</a>
+            <a href="#" class="tiny button alert" onclick="promptForDelete( '[% bcdate.book %]', '/admin/manage_book_club/[% bcdate.id %]/delete' );">Delete</a>
+          </td>
+        </tr>
+      [% END %]
+      </tbody>
+    </table>
+  </div>
+</div>
+

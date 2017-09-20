@@ -1,0 +1,41 @@
+[% USE date %]
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h5>Edit Book Club Date</h5>
+
+    <form method="post" action="/admin/manage_book_club/[% data.date.id %]/update" data-abide novalidate>
+
+      <div class="row">
+        <div class="small-12 medium-8 columns">
+          <label for="book">Book Title:
+            <input type="text" name="book" placeholder="The Handmaid's Tale" value="[% data.date.book %]" required>
+            <span class="form-error">A book title is required.</span>
+          </label>
+        </div>
+        <div class="small-12 medium-4 columns">
+          <label for="author">Book Author:
+            <input type="text" name="author" placeholder="Margaret Atwood" value="[% data.date.author %]" required>
+            <span class="form-error">A book author is required.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="small-12 medium-6 columns">
+          <label for="date">Date:
+            <input type="date" name="date" value="[% data.date.date %]" required>
+            <span class="form-error">You must provide a date.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="row column">
+        <button class="button" type="submit">Save Date</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+

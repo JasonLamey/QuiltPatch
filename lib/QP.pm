@@ -2771,6 +2771,231 @@ post '/admin/manage_newsletter/:newsletter_id/update' => require_role Admin => s
 };
 
 
+=head2 GET C</admin/manage_book_club>
+
+Route for managing book club dates.  Require the user is an Admin.
+
+=cut
+
+get '/admin/manage_book_club' => require_role Admin => sub
+{
+  my @bookclub_dates = $SCHEMA->resultset( 'BookClubDate' )->search( undef,
+    {
+      order_by => { -desc => 'date' },
+    }
+  )->all();
+
+  template 'admin_manage_book_club_dates',
+  {
+    data =>
+    {
+      dates => \@bookclub_dates,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => "Manage Book Club", current => 1 },
+    ],
+    title => "Manage Book Club",
+  }
+};
+
+
+=head2 GET C</admin/manage_book_club/add>
+
+Route to add new book club date form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_book_club/add' => require_role Admin => sub
+{
+  template 'admin_manage_book_club_dates_add_form',
+  {
+    data =>
+    {
+    },
+    title => 'Add New Book Club Date',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => "Manage Book Club", link => '/admin/manage_book_club' },
+      { name => "Add New Book Club Date", current => 1 },
+    ],
+  };
+};
+
+
+=head2 POST C</admin/manage_book_club/create>
+
+Route to save new book club date data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_book_club/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $new_date = $SCHEMA->resultset( 'BookClubDate' )->create(
+    {
+      book   => body_parameters->get( 'book' ),
+      author => body_parameters->get( 'author' ),
+      date   => body_parameters->get( 'date' ),
+    }
+  );
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new book club date, >%s< on >%s<, ID: >%s<, on %s',
+      body_parameters->get( 'book' ), body_parameters->get( 'date' ), $new_date->id, $now );
+
+  flash success => sprintf( 'Successfully created date for &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'book' ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new book club date<br>%s', join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_book_club';
+};
+
+
+=head2 GET C</admin/manage_book_club/:date_id/edit>
+
+Route for presenting the edit book club date form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_book_club/:date_id/edit' => require_role Admin => sub
+{
+  my $date_id = route_parameters->get( 'date_id' );
+
+  my $date = $SCHEMA->resultset( 'BookClubDate' )->find( $date_id );
+
+
+  template 'admin_manage_book_club_dates_edit_form',
+  {
+    data =>
+    {
+      date => $date,
+    },
+    title => 'Edit Book Club Date',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => "Manage Book Club", link => '/admin/manage_book_club' },
+      { name => "Edit Book Club Date", current => 1 },
+    ],
+  };
+};
+
+
+=head2 POST C</admin/manage_book_club/:date_id/update>
+
+Route to send form data to for updating a book club date in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_book_club/:date_id/update' => require_role Admin => sub
+{
+  my $date_id = route_parameters->get( 'date_id' );
+
+  my $date      = $SCHEMA->resultset( 'BookClubDate' )->find( $date_id );
+  my $orig_date = Clone::clone( $date );
+
+  if
+  (
+    not defined $date
+    or
+    ref( $date ) ne 'QP::Schema::Result::BookClubDate'
+  )
+  {
+    flash( error => 'Error: Cannot update book club date - Invalid or unknown ID.' );
+    redirect '/admin/manage_book_club';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $date->book( body_parameters->get( 'book' ) );
+  $date->author( body_parameters->get( 'author' ) );
+  $date->date( body_parameters->get( 'date' ) );
+
+  $date->update();
+
+  info sprintf( 'Book Club date for >%s< updated by %s on %s.', $date->book, logged_in_user->username, $now );
+
+  my $old =
+  {
+    book   => $orig_date->book,
+    author => $orig_date->author,
+    date   => $orig_date->date,
+  };
+  my $new =
+  {
+    book   => body_parameters->get( 'book' ),
+    author => body_parameters->get( 'author' ),
+    date   => body_parameters->get( 'date' ),
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Book Club Date modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated book club date for &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'book' ) ) );
+  redirect '/admin/manage_book_club';
+};
+
+
+=head2 GET C</admin/manage_book_club/:date_id/delete>
+
+Route to delete a book club date. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_book_club/:date_id/delete' => require_role Admin => sub
+{
+  my $date_id = route_parameters->get( 'date_id' );
+
+  my $date      = $SCHEMA->resultset( 'BookClubDate' )->find( $date_id );
+  my $date_book = $date->book;
+
+  if
+  (
+    not defined $date
+    or
+    ref( $date ) ne 'QP::Schema::Result::BookClubDate'
+  )
+  {
+    flash( error => 'Error: Cannot delete book club date - Invalid or unknown ID.' );
+    redirect '/admin/manage_book_club';
+  }
+
+  $date->delete;
+
+  flash success => sprintf( 'Successfully deleted date for <strong>%s</strong>.', $date_book );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Book club date for &quot;%s&quot; deleted', $date_book ),
+  );
+  redirect '/admin/manage_book_club';
+};
+
+
 =head2 POST C</admin/manage_products/:product_id/upload>
 
 Route for uploading product images and associating them to the indicated product. Require the user is an Admin.
