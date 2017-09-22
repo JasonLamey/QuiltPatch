@@ -1,7 +1,7 @@
 [% USE date %]
 [% calc  = date.calc %]
             <div class="row column">
-              <div class="class-block callout">
+              <div class="class-block callout callout-white">
                 <a name="[% item.id %]" id="[% item.id %]"></a>
 
                 <div class="row">
@@ -9,6 +9,11 @@
                 <h6>
                   [% IF item.is_new %] <span class="new"><i class="fa fa-certificate fa-fw"></i>NEW!</span> [% END %]
                   [% item.title %]
+                  [% IF session.logged_in_user %]
+                  <span data-tooltip aria-haspopup="true" class="has-tip" data-disable-hover="false" title="Click to bookmark or unbookmark this class." id="bookmark_[% item.id %]">[% IF item.is_bookmarked(liuid) %]<a onClick="BookmarkToggle([% item.id %], -1);"><i class="fa fa-bookmark fa-fw"></i></a>[% ELSE %]<a onClick="BookmarkToggle([% item.id %], 1);"><i class="fa fa-bookmark-o fa-fw"></i></a>[% END %]</span>
+                  [% ELSE %]
+                  <span data-tooltip aria-haspopup="true" class="has-tip" data-disable-hover="false" title="Log in or sign up for an account to bookmark this class."><a href="#login-modal" rel="modal:open" data-modal><i class="fa fa-bookmark-o fa-fw"></i></a></span>
+                  [% END %]
                 </h6>
                   </div>
                   <div class="small-3 columns text-right">

@@ -119,6 +119,8 @@ plugins:
         roles_role_column: 'role'
         roles_key: 'roles'
         encryption_algorithm: 'SHA-512'
+  Ajax:
+    content_type: 'application/json'
 
 engines:
   template:

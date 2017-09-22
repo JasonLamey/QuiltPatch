@@ -2,6 +2,8 @@ package QP::Schema::Result::ClassInfo;
 
 use base qw/DBIx::Class::Core/;
 
+use DateTime;
+
 __PACKAGE__->table( 'classes' );
 
 __PACKAGE__->add_columns(
@@ -140,7 +142,69 @@ __PACKAGE__->belongs_to( 'subgroup'    => 'QP::Schema::Result::ClassSubgroup', '
 
 __PACKAGE__->has_many( 'dates'         => 'QP::Schema::Result::ClassDate',    'class_id' );
 __PACKAGE__->has_many( 'classteachers' => 'QP::Schema::Result::ClassTeacher', 'class_id', { order_by => { -asc => 'sort_order' } } );
+__PACKAGE__->has_many( 'classbookmarks' => 'QP::Schema::Result::ClassBookmark', 'class_id', { order_by => { -desc => 'created_at' } } );
 
-__PACKAGE__->many_to_many( 'teachers'  => 'classteachers', 'teacher' );
+__PACKAGE__->many_to_many( 'teachers'  => 'classteachers',  'teacher' );
+__PACKAGE__->many_to_many( 'bookmarks' => 'classbookmarks', 'user' );
+
+# ADDITIONAL METHODS
+
+sub next_upcoming_date
+{
+  my $self = shift;
+  my $today = DateTime->today;
+
+  my $upcoming = $self->search_related( 'dates',
+    {
+      'date' => { '>=' => $today->ymd }
+    },
+    {
+      order_by => { -asc => [ 'date', 'start_time1' ] },
+      rows     => 1,
+    }
+  )->single();
+
+  #warn sprintf( 'NEXT-UPCOMING-DATE: %s', $upcoming->date );
+
+  return ( $upcoming // undef );
+}
+
+sub has_upcoming_classes
+{
+  my $self = shift;
+  my $today = DateTime->today;
+
+  return 1 if $self->always_show == 1;
+
+  my $count = $self->search_related( 'dates',
+    {
+      'date' => { '>=' => $today->ymd },
+    }
+  )->count;
+
+  #debug sprintf( 'HAS_CURRENT_CLASSES COUNT = >%s<', $count );
+
+  return ( $count // 0 );
+}
+
+sub is_bookmarked
+{
+  my $self    = shift;
+  my $user_id = shift // 0;
+
+  return 0 if not defined $self or ref($self) ne 'QP::Schema::Result::ClassInfo';
+
+  $user_id =~ s/\D//g;
+
+  return 0 if $user_id == 0;
+
+  my $bookmarked = $self->search_related( 'classbookmarks',
+    {
+      'user_id' => $user_id,
+    }
+  )->single();
+
+  return ( ref( $bookmarked ) eq 'QP::Schema::Result::ClassBookmark' ) ? 1 : 0;
+}
 
 1;

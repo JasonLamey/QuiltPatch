@@ -16,6 +16,7 @@ use URI::Escape::JavaScript;
 use DBICx::Sugar;
 use Clone;
 use Array::Utils;
+use jQuery::File::Upload;
 
 use QP::Log;
 use QP::Mail;
@@ -32,7 +33,7 @@ const my $ADMIN_SESSION_EXPIRE_TIME => 600;    # 10 minutes in seconds.
 const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensible realm
 const my $DATA_FORM_VALIDATOR => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
 
-$SCHEMA->storage->debug(1); # Turns on DB debuging. Turn off for production.
+$SCHEMA->storage->debug(0); # Turns on DB debuging. Turn off for production.
 
 hook before_template_render => sub
 {
@@ -42,6 +43,7 @@ hook before_template_render => sub
   $tokens->{datetime_format_long}  = config->{datetime_format_long};
   $tokens->{date_format_short}     = config->{date_format_short};
   $tokens->{date_format_long}      = config->{date_format_long};
+  $tokens->{liuid}                 = ( defined logged_in_user ) ? logged_in_user->id : 0;
 };
 
 
@@ -1215,6 +1217,103 @@ post '/account_confirmation' => sub
 ###########################################################################
 
 
+=head2 AJAX C</bookmark_class/:class_id/:action>
+
+AJAX call route to toggle the bookmarking of a class.
+
+=cut
+
+ajax '/bookmark_class/:class_id/:action' => require_login sub
+{
+
+  my $class_id = route_parameters->get( 'class_id' );
+  my $action   = route_parameters->get( 'action' );
+
+  my @json = ();
+
+  if ( not session( 'logged_in_user' ) )
+  {
+    warning 'Failed attempt at bookmarking a class by a non-logged-in user.';
+    push( @json,
+      {
+        message => 'Could not update the bookmark. You must be logged in.',
+        success => 0,
+      }
+    );
+    return to_json( \@json );
+  }
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  if
+  (
+    not defined $class
+    or
+    ref( $class ) ne 'QP::Schema::Result::ClassInfo'
+  )
+  {
+    warning 'Failed attempt at bookmarking a class with an invalid or undefined class ID.';
+    push( @json,
+      {
+        message => 'Could not update the bookmark. Invalid Class.',
+        success => 0,
+      }
+    );
+    return to_json( \@json );
+  }
+
+  my $user = $SCHEMA->resultset( 'User' )->find( logged_in_user->id );
+
+  if
+  (
+    ! defined $user
+    or
+    ref( $user ) ne 'QP::Schema::Result::User'
+  )
+  {
+    warning 'Failed attempt at bookmarking a class with an invalid or undefined user ID.';
+    push( @json,
+      {
+        message => 'Could not update the bookmark. Invalid User.',
+        success => 0,
+      }
+    );
+    return to_json( \@json );
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  if ( $action == -1 )
+  {
+    $user->remove_from_bookmarks( $class );
+  }
+  else
+  {
+    $user->add_to_bookmarks( $class, { created_at => $now } );
+  }
+
+  my $action_msg = ( $action == -1 ) ? 'Successfully removed your bookmark for "%s".'
+                                     : 'Successfully bookmarked "%s".';
+
+  push ( @json,
+    {
+      message => sprintf( $action_msg, $class->title ),
+      success => 1,
+    }
+  );
+
+  my $logged = QP::Log->user_log
+  (
+    user        => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( $action_msg, $class->title ),
+  );
+
+  to_json( \@json );
+};
+
+
 =head2 GET C</user>
 
 GET route for the default user home page.
@@ -1223,17 +1322,38 @@ GET route for the default user home page.
 
 get '/user' => require_login sub
 {
-  my $user = $SCHEMA->resultset( 'User' )->find( { username => session( 'logged_in_user' ) } );
+  my $user = $SCHEMA->resultset( 'User' )->find( logged_in_user->id );
   if ( ! defined $user or ! defined $user->id )
   {
     warning 'Invalid username supplied to find User account in user dashboard.';
+  }
+
+  my @bookmarks = $user->bookmarks();
+  my %by_date   = ();
+  foreach my $bm ( @bookmarks )
+  {
+    if ( defined $bm->next_upcoming_date )
+    {
+      $by_date{ $bm->next_upcoming_date->date . '.' . $bm->next_upcoming_date->start_time1 . '.' . $bm->id } = $bm;
+    }
+    else
+    {
+      $by_date{ '3000-01-01' . '.' . '00:00:00' . '.' . $bm->id } = $bm;
+    }
+  }
+  my @by_date = ();
+  foreach my $key ( sort keys %by_date )
+  {
+    push( @by_date, $by_date{$key} );
   }
 
   template 'user_dashboard',
   {
     data =>
     {
-      user => $user,
+      user              => $user,
+      bookmarks         => \@bookmarks,
+      bookmarks_by_date => \@by_date,
     }
   };
 };
@@ -1299,6 +1419,59 @@ post '/user/account' => require_login sub
 
   flash( success => 'Your changes have been saved!' );
   redirect '/user/account';
+};
+
+
+=head2 GET C</user/bookmarks>
+
+GET route for managing User bookmarks data.
+
+=cut
+
+get '/user/bookmarks' => require_login sub
+{
+  my $user = $SCHEMA->resultset( 'User' )->find( logged_in_user->id );
+
+  my @bookmarks = $user->bookmarks;
+
+  template 'user_bookmarks',
+  {
+    title => 'Manage Your Bookmarks',
+    data  =>
+    {
+      bookmarks => \@bookmarks,
+    },
+  };
+};
+
+
+=head2 GET C</user/bookmarks/:bookmark_id/delete>
+
+GET route for deleting User bookmarks data.
+
+=cut
+
+get '/user/bookmarks/:bookmark_id/delete' => require_login sub
+{
+  my $bookmark_id = route_parameters->get( 'bookmark_id' );
+  my $user = $SCHEMA->resultset( 'User' )->find( logged_in_user->id );
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $bookmark_id );
+
+  if
+  (
+    not defined $class
+    or
+    ref( $class ) ne 'QP::Schema::Result::ClassInfo'
+  )
+  {
+    flash( error => sprintf( 'An error occurred and we could not remove your bookmark. Please try again later.' ) );
+    redirect '/user/bookmarks';
+  }
+
+  $user->remove_from_bookmarks( $class );
+
+  flash( success => sprintf( 'Successfully removed %s from your bookmarks.', $class->title ) );
+  redirect '/user/bookmarks';
 };
 
 

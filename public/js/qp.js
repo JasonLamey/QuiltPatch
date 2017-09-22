@@ -109,3 +109,41 @@ function setTimePickers()
     step: 15
   });
 }
+
+function BookmarkToggle( class_id, action )
+{
+  var bookmark_url = "/bookmark_class/" + class_id + "/" + action;
+
+  $.ajax(
+    {
+      url: bookmark_url,
+      dataType: 'json',
+      type: 'GET',
+      success: function( data )
+      {
+        if ( data[0].success < 1 )
+        {
+            showError( data[0].message );
+            return false;
+        }
+        if ( action == -1 )
+        {
+          $('#bookmark_' + class_id).html( '<a onClick="BookmarkToggle( '
+                                          + class_id
+                                          + ', 1 )"><i class="fa fa-bookmark-o fa-fw"></i></a>' );
+        }
+        else
+        {
+          $('#bookmark_' + class_id).html( '<a onClick="BookmarkToggle( '
+                                          + class_id
+                                          + ', -1 )"><i class="fa fa-bookmark fa-fw"></i></a>' );
+        }
+        showSuccess( data[0].message )
+      },
+      error: function()
+      {
+        showError( 'An error occurred, and we could not bookmark this Class. Please try again later.' )
+      }
+    }
+  );
+}

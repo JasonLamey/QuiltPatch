@@ -1,26 +1,58 @@
+[% USE date %]
+[% USE Dumper %]
             [% PROCESS 'partials/_user_dashboard_nav.tt' %]
 
             <div class="row">
               <div class="small-12 medium-6 columns">
                 <div class="callout">
-                  <h3>Upcoming Classes</h3>
+                  <h5>Upcoming Classes</h5>
                   <div class="row column">
-                    [% IF classes.upcoming.defined && data.classes.upcoming.size > 0 %]
+                    [% IF data.bookmarks_by_date.defined && data.bookmarks_by_date.size > 0 %]
+                      [% bookmark_count = 0 %]
+                      [% FOREACH bookmark IN data.bookmarks_by_date %]
+                        [% PROCESS 'bookmark_block' %]
+                        [% bookmark_count = bookmark_count + 1; IF bookmark_count == 5; LAST; END; %]
+                      [% END %]
                     [% ELSE %]
-                      <strong>On no, [% data.user.username %], you have not bookmarked any classes!</strong>
+                      <strong>Oh no! You have not bookmarked any classes!</strong>
                     [% END %]
                   </div>
                 </div>
               </div>
               <div class="small-12 medium-6 columns">
                 <div class="callout">
-                  <h3>Most Recent Bookmarks</h3>
+                  <h5>Most Recent Bookmarks</h5>
                   <div class="row column">
-                    [% IF classes.upcoming.defined && data.classes.upcoming.size > 0 %]
+                    [% IF data.bookmarks.defined && data.bookmarks.size > 0 %]
+                      [% bookmark_count = 0 %]
+                      [% FOREACH bookmark IN data.bookmarks %]
+                        [% PROCESS 'bookmark_block' %]
+                        [% bookmark_count = bookmark_count + 1; IF bookmark_count == 5; LAST; END; %]
+                      [% END %]
                     [% ELSE %]
-                      <strong>On no, [% data.user.username %], you have not bookmarked any classes!</strong>
+                      <strong>Oh no! You have not bookmarked any classes!</strong>
                     [% END %]
                   </div>
                 </div>
               </div>
             </div>
+
+[% BLOCK 'bookmark_block' %]
+  <div class="row column">
+    <div class="small callout [% IF bookmark.next_upcoming_date.defined %]callout-white[% ELSE %]secondary[% END %]">
+      <strong><a href="/classes/[% bookmark.class_group_id %]#[% bookmark.id %]">[% bookmark.title %]</a></strong><br>
+      <small>Next Class:
+      [% IF bookmark.next_upcoming_date.defined %]
+      [% date.format( bookmark.next_upcoming_date.date _ ' ' _ bookmark.next_upcoming_date.start_time1, '%a %b %d, %Y' ) %]
+      [% date.format( bookmark.next_upcoming_date.date _ ' ' _ bookmark.next_upcoming_date.start_time1, '%l:%M %p' ) %]&ndash;[% date.format( bookmark.next_upcoming_date.date _ ' ' _ bookmark.next_upcoming_date.end_time1, '%l:%M %p' ) %]</small>
+      [% ELSE %]No upcoming dates.</small>[% END %]
+      [% IF bookmark.classteachers.size > 0 %][% teacher_count = 1 %]<br>
+      <small>Instructor:
+        [% FOREACH teacher IN bookmark.teachers %]
+          [% IF teacher_count > 1 %], [% END %]<a href="/classes/by_teacher#[% teacher.id %]">[% teacher.name %]</a>
+          [% teacher_count = teacher_count + 1 %]
+        [% END %]</small>
+      [% END %]
+    </div>
+  </div>
+[% END %]

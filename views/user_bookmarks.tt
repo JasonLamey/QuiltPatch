@@ -1,0 +1,53 @@
+[% PROCESS 'partials/_user_dashboard_nav.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h5>Manage Your Bookmarks</h5>
+
+    <table class="hover stack" id="bookmarks_table">
+      <thead>
+        <tr>
+          <th>Class</th>
+          <th>Instructors</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        [% FOREACH bookmark IN data.bookmarks %]
+        <tr>
+          <td><a href="/classes/[% bookmark.class_group_id %]#[% bookmark.id %]">[% bookmark.title %]</a></td>
+          <td>
+            [% IF bookmark.classteachers.size > 0 %][% teacher_count = 1 %]
+              [% FOREACH teacher IN bookmark.teachers %]
+                [% IF teacher_count > 1 %], [% END %]<a href="/classes/by_teacher#[% teacher.id %]">[% teacher.name %]</a>
+                [% teacher_count = teacher_count + 1 %]
+              [% END %]
+            [% ELSE %]No Instructor
+            [% END %]
+          </td>
+          <td>
+            <button class="alert button" onclick="promptForDelete( '[% bookmark.title %]', '/user/bookmarks/[% bookmark.id %]/delete' );">Unbookmark</button>
+          </td>
+        </tr>
+        [% END %]
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  $('#bookmarks_table').DataTable
+  (
+    {
+      searching  : true,
+      ordering   : true,
+      lengthMenu : [ 10, 25, 50, 75, 100 ],
+      pagingType : 'full_numbers',
+      responsive : true,
+      order      : [ 0, 'asc' ],
+      scrollY    : 500
+    }
+  );
+</script>

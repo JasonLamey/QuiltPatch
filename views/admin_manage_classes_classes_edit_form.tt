@@ -8,6 +8,8 @@
     <h5>Edit Class - [% data.class.title %]</h5>
 
     <form method="post" action="/admin/manage_classes/classes/[% data.class.id %]/update" data-abide novalidate>
+    [% cl_ts = {}; t_count = 1; %]
+    [% FOREACH clt IN data.class.classteachers; cl_ts.$t_count = clt.teacher_id; t_count = tcount + 1; END; %]
 
       <div class="row">
         <div class="small-12 medium-6 columns">
@@ -19,19 +21,19 @@
             <select name="teacher_id">
               <option value=''>Teacher 1: Select One</option>
               [% FOREACH teacher IN data.teachers %]
-              <option value='[% teacher.id %]'[% IF teacher.id == data.class.classteachers.0.teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              <option value='[% teacher.id %]'[% IF teacher.id == cl_ts.1 %] selected[% END %]>[% teacher.name %]</option>
               [% END %]
             </select>
             <select name="secondary_teacher_id">
               <option value=''>Teacher 2: Select One If Needed</option>
               [% FOREACH teacher IN data.teachers %]
-              <option value='[% teacher.id %]'[% IF teacher.id == data.class.classteachers.1.teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              <option value='[% teacher.id %]'[% IF teacher.id == cl_ts.2 %] selected[% END %]>[% teacher.name %]</option>
               [% END %]
             </select>
             <select name="tertiary_teacher_id">
               <option value=''>Teacher 3: Select One If Needed</option>
               [% FOREACH teacher IN data.teachers %]
-              <option value='[% teacher.id %]'[% IF teacher.id == data.class.classteachers.2.teacher_id %] selected[% END %]>[% teacher.name %]</option>
+              <option value='[% teacher.id %]'[% IF teacher.id == cl_ts.3 %] selected[% END %]>[% teacher.name %]</option>
               [% END %]
             </select>
           </label>
