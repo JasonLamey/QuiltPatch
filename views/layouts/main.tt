@@ -7,12 +7,14 @@
     <title>
       [% IF title %][% title %] | [% END %]The Quilt Patch
     </title>
-    <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.min.css">
+    <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.theme.min.css">
     <link rel="stylesheet" type="text/css" href="/css/app.css">
     <link rel="stylesheet" type="text/css" href="/css/jquery.modal.min.css">
     <link rel="stylesheet" type="text/css" href="/css/notifIt.css">
     <link rel="stylesheet" type="text/css" href="/css/ply.css">
     <link rel="stylesheet" type="text/css" href="/css/jquery.datetimepicker.css">
+    <link rel="stylesheet" type="text/css" href="/css/uploadfile.css">
+    <link rel="stylesheet" type="text/css" href="/css/lightbox.min.css" />
     <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.12/css/dataTables.foundation.css">
     <script type="text/javascript" src="/js/vendor/jquery/jquery-3.2.1.min.js"></script>
     <script type="text/javascript" src="/js/vendor/jqueryui/jquery-ui.min.js"></script>
@@ -51,26 +53,29 @@
     </header>
 
     <div class="row content-grid off-canvas-wrapper" data-equalizer="content">
-      <div class="side-menu off-canvas-absolute position-left reveal-for-medium" id="offCanvasLeft" data-equalizer-watch="content" data-off-canvas>
-        <div class="side-menu-item"><a href="/"><i class="fa fa-home fa-fw" aria-hidden="true"></i> Home</a></div>
-        <div class="side-menu-item"><a href="/calendar"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> Calendar</a></div>
-        <div class="side-menu-item"><a href="/classes"><i class="fa fa-graduation-cap fa-fw" aria-hidden="true"></i> Classes</a></div>
-        <div class="side-menu-item"><a href="/clubs"><i class="fa fa-group fa-fw" aria-hidden="true"></i> Clubs</a></div>
-        <div class="side-menu-item"><a href="/embroidery"><i class="fa fa-cubes fa-fw" aria-hidden="true"></i> Embroidery</a></div>
-        <div class="side-menu-item"><a href="/news/QP"><i class="fa fa-bullhorn fa-fw" aria-hidden="true"></i> QP News</a></div>
-        <div class="side-menu-item"><a href="/news/Bernina"><i class="fa fa-newspaper-o fa-fw" aria-hidden="true"></i> Bernina News</a></div>
-        <div class="side-menu-item"><a href="/services"><i class="fa fa-handshake-o fa-fw" aria-hidden="true"></i> Services</a></div>
-        <div class="side-menu-item"><a href="/directions"><i class="fa fa-map-marker fa-fw" aria-hidden="true"></i> Directions</a></div>
-        <div class="side-menu-item"><a href="/contact_us"><i class="fa fa-paper-plane fa-fw" aria-hidden="true"></i> Contact Us</a></div>
-        <div class="side-menu-item"><a href="/links"><i class="fa fa-external-link fa-fw" aria-hidden="true"></i> Links</a></div>
-        <hr>
-        [% IF session.logged_in_user %]
-          <div class="side-menu-item"><strong>Welcome back, [% session.logged_in_user %].</strong></div>
-          <div class="side-menu-item"><a href="/user"><i class="fa fa-user fa-fw" aria-hidden="true"></i> Your Account</a></div>
-          <div class="side-menu-item"><a href="/logout"><i class="fa fa-sign-out fa-fw" aria-hidden="true"></i> Logout</a></div>
-        [% ELSE %]
-          <div class="side-menu-item"><a href="#login-modal" rel="modal:open" data-modal><i class="fa fa-sign-in fa-fw" aria-hidden="true"></i> Login / Sign Up</a></div>
-        [% END %]
+      <div class="off-canvas-absolute position-left reveal-for-medium" id="offCanvasLeft" data-off-canvas>
+        <div class="side-menu" data-equalizer-watch="content">
+          <div class="side-menu-item"><a href="/"><i class="fa fa-home fa-fw" aria-hidden="true"></i> Home</a></div>
+          <div class="side-menu-item"><a href="/calendar"><i class="fa fa-calendar fa-fw" aria-hidden="true"></i> Calendar</a></div>
+          <div class="side-menu-item"><a href="/classes"><i class="fa fa-graduation-cap fa-fw" aria-hidden="true"></i> Classes</a></div>
+          <div class="side-menu-item"><a href="/clubs"><i class="fa fa-group fa-fw" aria-hidden="true"></i> Clubs</a></div>
+          <div class="side-menu-item"><a href="/embroidery"><i class="fa fa-cubes fa-fw" aria-hidden="true"></i> Embroidery</a></div>
+          <div class="side-menu-item"><a href="/news/QP"><i class="fa fa-bullhorn fa-fw" aria-hidden="true"></i> QP News</a></div>
+          <div class="side-menu-item"><a href="/news/Bernina"><i class="fa fa-newspaper-o fa-fw" aria-hidden="true"></i> Bernina News</a></div>
+          <div class="side-menu-item"><a href="/services"><i class="fa fa-handshake-o fa-fw" aria-hidden="true"></i> Services</a></div>
+          <div class="side-menu-item"><a href="/directions"><i class="fa fa-map-marker fa-fw" aria-hidden="true"></i> Directions</a></div>
+          <div class="side-menu-item"><a href="/contact_us"><i class="fa fa-paper-plane fa-fw" aria-hidden="true"></i> Contact Us</a></div>
+          <div class="side-menu-item"><a href="/links"><i class="fa fa-external-link fa-fw" aria-hidden="true"></i> Links</a></div>
+          <div class="side-menu-item"><a href="/downloads/newsletters/[% newsletter_file.filename %]"><i class="fa fa-file-pdf-o fa-fw" aria-hidden="true"></i> [% newsletter_session.session_name %] Newsletter</a></div>
+          <hr>
+          [% IF session.logged_in_user %]
+            <div class="side-menu-item"><strong>Welcome back, [% session.logged_in_user %].</strong></div>
+            <div class="side-menu-item"><a href="/user"><i class="fa fa-user fa-fw" aria-hidden="true"></i> Your Account</a></div>
+            <div class="side-menu-item"><a href="/logout"><i class="fa fa-sign-out fa-fw" aria-hidden="true"></i> Logout</a></div>
+          [% ELSE %]
+            <div class="side-menu-item"><a href="#login-modal" rel="modal:open" data-modal><i class="fa fa-sign-in fa-fw" aria-hidden="true"></i> Login / Sign Up</a></div>
+          [% END %]
+        </div>
       </div>
 
       <div class="content-copy off-canvas-content medium-expand" data-equalizer-watch="content" data-off-canvas>
@@ -122,9 +127,11 @@
     <script type="text/javascript" src="https://use.fontawesome.com/bbc3509751.js"></script>
     <script type="text/javascript" src="/js/vendor/fullcalendar/moment.min.js"></script>
     <script type="text/javascript" src="/js/vendor/fullcalendar/fullcalendar.min.js"></script>
+    <script type="text/javascript" src="/js/vendor/lightbox2/lightbox.min.js"></script>
     <script type="text/javascript" src="/js/vendor/jquery-modal/jquery.modal.min.js"></script>
     <script type="text/javascript" src="/js/vendor/easyPaginate/jquery.easyPaginate.js"></script>
     <script type="text/javascript" src="/js/vendor/mark.js/jquery.mark.min.js"></script>
     <script type="text/javascript" src="/js/vendor/ply/Ply.min.js"></script>
+    <script type="text/javascript" src="/js/vendor/file-uploader/jquery.uploadfile.min.js"></script>
   </body>
 </html>

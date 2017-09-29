@@ -1,0 +1,128 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+<div class="row column">
+  <div class="callout">
+    <h4>Manage Files for &quot;[% data.class.title %]&quot;</h4>
+
+    <div class="row">
+      <div class="small-12 medium-6 columns">
+        <h5>Supply List</h5>
+        <div id="supply_list_uploads">Upload</div>
+      </div>
+
+      <div class="small-12 medium-6 columns">
+        <h5>Photos</h5>
+        <div id="photo_uploads">Upload</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+$( document ).ready( function()
+  {
+    $( "#supply_list_uploads" ).uploadFile(
+      {
+        url: '/admin/manage_classes/class/[% data.class.id %]/supply_list/fileupload',
+        acceptFiles: 'application/pdf',
+        fileName: 'file',
+        dragDrop: true,
+        returnType: 'json',
+        allowedTypes: 'pdf',
+        showDelete: true,
+        showFileSize: true,
+        sequential:true,
+        sequentialCount:1,
+
+        onLoad:function(obj)
+        {
+          $.ajax
+          (
+            {
+              cache: false,
+              url: "/admin/manage_classes/class/[% data.class.id %]/supply_list/get_files",
+              dataType: "json",
+              success: function(data)
+              {
+                for(var i=0;i<data.length;i++)
+                {
+                  obj.createProgress( data[i]["name"], data[i]["path"], data[i]["size"] );
+                }
+              }
+            }
+          );
+        },
+
+        deleteCallback: function(data,pd)
+        {
+          for(var i=0;i<data.length;i++)
+          {
+            $.post( "/admin/manage_classes/class/[% data.class.id %]/supply_list/delete", { op:"delete", name:data[i] },
+              function( resp, textStatus, jqXHR )
+              {
+                //Show Message
+                showSuccess("File Deleted");
+              }
+            );
+          }
+          pd.statusbar.hide();
+        }
+
+      }
+    );
+
+    $( "#photo_uploads" ).uploadFile(
+      {
+        url: '/admin/manage_classes/class/[% data.class.id %]/photos/fileupload',
+        acceptFiles: 'image/*',
+        fileName: 'file',
+        dragDrop: true,
+        returnType: 'json',
+        allowedTypes: 'jpg,jpeg,gif,png',
+        showDelete: true,
+        showFileSize: true,
+        multiple: true,
+        sequential: true,
+        sequentialCount: 1,
+        showPreview: true,
+        previewWidth: '100px',
+
+        onLoad:function(obj)
+        {
+          $.ajax
+          (
+            {
+              cache: false,
+              url: "/admin/manage_classes/class/[% data.class.id %]/photos/get_files",
+              dataType: "json",
+              success: function(data)
+              {
+                for(var i=0;i<data.length;i++)
+                {
+                  obj.createProgress( data[i]["name"], data[i]["path"], data[i]["size"] );
+                }
+              }
+            }
+          );
+        },
+
+        deleteCallback: function(data,pd)
+        {
+          for(var i=0;i<data.length;i++)
+          {
+            $.post( "/admin/manage_classes/class/[% data.class.id %]/photos/delete", { op:"delete", name:data[i] },
+              function( resp, textStatus, jqXHR )
+              {
+                //Show Message
+                showSuccess("File Deleted");
+              }
+            );
+          }
+          pd.statusbar.hide();
+        }
+      }
+    );
+
+  }
+);
+</script>

@@ -1,6 +1,6 @@
         <div class="row column">
           <div class="callout">
-            <h3>Summer 2017 classes are posted! Sign up now!</h3>
+            <h3>[% newsletter_session.session_name %] classes are posted! Sign up now!</h3>
             <p>Click the links below to see classes, supply lists, and pictures.</p>
             <p>For a complete list of all current classes listed by teacher, <a href="/classes/by_teacher">click here</a>.</p>
 

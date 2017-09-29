@@ -1,0 +1,78 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+<div class="row column">
+  <div class="callout">
+
+    <h5>Manage Site Info &amp; Files</h5>
+
+    <form method="post" action="/admin/manage_session" id="nlsession-form" data-abide novalidate>
+      <label><strong>Current Newsletter Session:</strong> [% data.current_session.session_name %]</label>
+      <label for="session_name">New Newsletter Session Name:
+        <input type="text" name="session_name" value="" placeholder="Fall 2017">
+        <span class="form-error">A Session Name is required.</span>
+      </label>
+      <button type="submit" class="button" for="nlsession-form">Update Session Name</button>
+    </form><br>
+
+
+    <h5>Upload Newsletter File</h5>
+
+    <div id="fileuploader">Upload</div>
+
+  </div>
+</div>
+
+<script>
+$( document ).ready( function()
+  {
+    $( "#fileuploader" ).uploadFile(
+      {
+        url: '/admin/newsletter/fileupload',
+        acceptFiles: 'application/pdf',
+        fileName: 'file',
+        dragDrop: true,
+        returnType: 'json',
+        allowedTypes: 'pdf',
+        showDelete: true,
+        showFileSize: true,
+        sequential:true,
+        sequentialCount:1,
+
+        onLoad:function(obj)
+        {
+          $.ajax
+          (
+            {
+              cache: false,
+              url: "/admin/newsletter/get_files",
+              dataType: "json",
+              success: function(data)
+              {
+                for(var i=0;i<data.length;i++)
+                {
+                  obj.createProgress( data[i]["name"], data[i]["path"], data[i]["size"] );
+                }
+              }
+            }
+          );
+        },
+
+        deleteCallback: function(data,pd)
+        {
+          for(var i=0;i<data.length;i++)
+          {
+            $.post( "/admin/newsletter/delete", { op:"delete", name:data[i] },
+              function( resp, textStatus, jqXHR )
+              {
+                //Show Message
+                showSuccess("File Deleted");
+              }
+            );
+          }
+          pd.statusbar.hide();
+        }
+
+      }
+    );
+  }
+);
+</script>

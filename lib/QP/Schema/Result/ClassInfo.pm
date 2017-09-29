@@ -141,6 +141,7 @@ __PACKAGE__->belongs_to( 'class_group' => 'QP::Schema::Result::ClassGroup',    '
 __PACKAGE__->belongs_to( 'subgroup'    => 'QP::Schema::Result::ClassSubgroup', 'class_subgroup_id' );
 
 __PACKAGE__->has_many( 'dates'         => 'QP::Schema::Result::ClassDate',    'class_id' );
+__PACKAGE__->has_many( 'files'         => 'QP::Schema::Result::ClassFile',    'class_id' );
 __PACKAGE__->has_many( 'classteachers' => 'QP::Schema::Result::ClassTeacher', 'class_id', { order_by => { -asc => 'sort_order' } } );
 __PACKAGE__->has_many( 'classbookmarks' => 'QP::Schema::Result::ClassBookmark', 'class_id', { order_by => { -desc => 'created_at' } } );
 
@@ -205,6 +206,39 @@ sub is_bookmarked
   )->single();
 
   return ( ref( $bookmarked ) eq 'QP::Schema::Result::ClassBookmark' ) ? 1 : 0;
+}
+
+sub get_supply_list
+{
+  my $self = shift;
+
+  my $supply_list = $self->search_related( 'files',
+    {
+      filetype => 'supply list',
+    },
+    {
+      order_by => { -desc => created_on },
+      rows     => 1
+    }
+  )->single();
+
+  return ( ref( $supply_list ) eq 'QP::Schema::Result::ClassFile' ) ? $supply_list : undef;
+}
+
+sub get_photos
+{
+  my $self = shift;
+
+  my @photos = $self->search_related( 'files',
+    {
+      filetype => 'image',
+    },
+    {
+      order_by => { -desc => created_on },
+    }
+  );
+
+  return ( scalar( @photos ) > 0 ) ? @photos : undef;
 }
 
 1;

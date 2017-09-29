@@ -16,7 +16,7 @@ use URI::Escape::JavaScript;
 use DBICx::Sugar;
 use Clone;
 use Array::Utils;
-use jQuery::File::Upload;
+use GD::Thumbnail;
 
 use QP::Log;
 use QP::Mail;
@@ -31,7 +31,11 @@ const my $DT_PARSER => $SCHEMA->storage->datetime_parser;
 const my $USER_SESSION_EXPIRE_TIME  => 172800; # 48 hours in seconds.
 const my $ADMIN_SESSION_EXPIRE_TIME => 600;    # 10 minutes in seconds.
 const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensible realm
-const my $DATA_FORM_VALIDATOR => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
+const my $DATA_FORM_VALIDATOR  => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
+const my $BASE_UPLOAD_FILE_DIR => path( config->{ appdir }, 'public/downloads' );
+const my $BASE_CLASS_FILE_DIR  => path( config->{ appdir }, 'public/class_files' );
+const my $MAX_IMAGE_FILE_SIZE  => 1048576;     # 10MB in bytes.
+const my $MAX_PDF_FILE_SIZE    => 1048576;     # 10MB in bytes.
 
 $SCHEMA->storage->debug(0); # Turns on DB debuging. Turn off for production.
 
@@ -44,6 +48,10 @@ hook before_template_render => sub
   $tokens->{date_format_short}     = config->{date_format_short};
   $tokens->{date_format_long}      = config->{date_format_long};
   $tokens->{liuid}                 = ( defined logged_in_user ) ? logged_in_user->id : 0;
+  $tokens->{newsletter_session}    = $SCHEMA->resultset( 'NewsletterSession' )->search( {},
+                                          { order_by => { -desc => 'created_on' }, rows => 1 } )->single();
+  $tokens->{newsletter_file}       = $SCHEMA->resultset( 'SiteFile' )->search( {},
+                                          { order_by => { -desc => 'created_on' }, rows => 1 } )->single();
 };
 
 
@@ -108,6 +116,12 @@ get '/' => sub {
                                                   }
   );
 
+  my @bookclub_dates = $SCHEMA->resultset( 'BookClubDate' )->search( { date => { '>=' => $DT_PARSER->format_datetime($today) } },
+    {
+      order_by => { -asc => 'date' },
+    }
+  )->all();
+
   template 'index',
             {
               data =>
@@ -116,6 +130,7 @@ get '/' => sub {
                 events     => \@events,
                 closings   => \@closings,
                 newsletter => $newsletter_rs->first,
+                bookclub   => \@bookclub_dates,
               },
             };
 };
@@ -713,7 +728,7 @@ Route to reset a user's password.
 
 get '/reset_password' => sub
 {
-  template 'reset_password_form';
+  template 'reset_password_form', { title => 'Reset Password' };
 };
 
 
@@ -920,7 +935,7 @@ get '/signed_up' => require_login sub
         user         => $user,
         from_address => config->{mailer_address},
       },
-      subtitle => 'Thanks for Signing Up!',
+      title => 'Thanks for Signing Up!',
     };
 };
 
@@ -1086,6 +1101,7 @@ get '/login' => sub
       {
         return_url => $return_url
       },
+      title => 'Login to Your Account',
     };
 };
 
@@ -1193,7 +1209,7 @@ get '/account_confirmation/:ccode' => sub
         success => 1,
         user    => $user,
       },
-      subtitle => 'Account Confirmation',
+      title => 'Account Confirmation',
     };
 };
 
@@ -1354,7 +1370,8 @@ get '/user' => require_login sub
       user              => $user,
       bookmarks         => \@bookmarks,
       bookmarks_by_date => \@by_date,
-    }
+    },
+    title => 'Your Account',
   };
 };
 
@@ -1378,7 +1395,8 @@ get '/user/account' => require_login sub
     data =>
     {
       user => $user,
-    }
+    },
+    title => 'Edit Your User Info',
   }
 };
 
@@ -1419,6 +1437,73 @@ post '/user/account' => require_login sub
 
   flash( success => 'Your changes have been saved!' );
   redirect '/user/account';
+};
+
+
+=head2 GET C</user/change_password/?:new_password?>
+
+Route to change a user's password. Requires the user to be logged in.
+
+=cut
+
+get '/user/change_password/?:old_password?' => require_login sub
+{
+  my $old_password = route_parameters->get( 'old_password' ) // undef;
+
+  template 'user_change_password',
+  {
+    data =>
+    {
+      old_password => $old_password,
+    },
+    title => 'Change Password',
+  };
+};
+
+
+=head2 POST C</user/change_password>
+
+Route to update password data for a user's account. Requires the user to be logged in.
+
+=cut
+
+post '/user/change_password' => require_login sub
+{
+  my $old_password     = body_parameters->get( 'old_password' );
+  my $new_password     = body_parameters->get( 'new_password' );
+  my $confirm_password = body_parameters->get( 'confirm_password' );
+
+  unless( user_password( username => logged_in_user->username, password => $old_password ) )
+  {
+    flash( error => 'Could not update your password. Your Old Password was incorrect.' );
+    redirect '/user/change_password';
+  }
+
+  unless( $old_password ne $new_password )
+  {
+    flash( error => 'Could not update your password. Your New Password must be different from the Old Password.' );
+    redirect '/user/change_password';
+  }
+
+  unless( $new_password eq $confirm_password )
+  {
+    flash( error => 'Could not update your password. Your New Password and Confirm Password did not match.' );
+    redirect '/user/change_password';
+  }
+
+  user_password( username => logged_in_user->username, new_password => $new_password );
+
+  info sprintf( 'User >%s< successfully changed password.', logged_in_user->username );
+  my $logged = QP::Log->user_log
+  (
+    user        => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => 'Successful password change.',
+  );
+
+  flash( success => 'Your password has been successfully updated!' );
+  redirect '/user';
 };
 
 
@@ -2653,7 +2738,7 @@ post '/admin/manage_classes/classes/:class_id/dates/create' => require_role Admi
   {
     if
     (
-      defined body_parameters->get( 'date' . $datenum ) 
+      defined body_parameters->get( 'date' . $datenum )
       &&
       body_parameters->get( 'date' . $datenum ) ne ''
     )
@@ -2849,6 +2934,270 @@ get '/admin/manage_classes/classes/:class_id/dates/:date_id/delete' => require_r
 };
 
 
+=head2 GET C</admin/manage_classes/classes/:class_id/files>
+
+Route to manage class-related files. Requires user to be an admin.
+
+=cut
+
+get '/admin/manage_classes/classes/:class_id/files' => require_role Admin => sub
+{
+  my $class_id = route_parameters->get( 'class_id' );
+
+  my $class = $SCHEMA->resultset( 'ClassInfo' )->find( $class_id );
+
+  template 'admin_manage_classes_class_files',
+  {
+    title => 'Manage Class Files',
+    data  =>
+    {
+      class => $class,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Classes', link => '/admin/manage_classes/classes' },
+      { name => 'Manage Class Files', current => 1 },
+    ],
+  };
+};
+
+
+=head2 AJAX C</admin/manage_classes/class/:class_id/:file_type/get_files>
+
+AJAX route to fetch existing class files. Admin required.
+
+=cut
+
+ajax '/admin/manage_classes/class/:class_id/:file_type/get_files' => require_role Admin => sub
+{
+  my $class_id  = route_parameters->get( 'class_id' );
+  my $file_type = route_parameters->get( 'file_type' );
+
+  return if ( ! defined $class_id or ! defined $file_type );
+
+  my $file_path = path( $BASE_CLASS_FILE_DIR . sprintf( '/%d/%s', $class_id, $file_type ) );
+
+  opendir( DIR, $file_path );
+  my @class_files = readdir( DIR );
+  closedir DIR;
+
+  my @return_files = ();
+  foreach my $file ( @class_files )
+  {
+    next if $file =~ /^\./;
+    next if -d $file_path . '/' . $file;
+    my %details = (
+      name => $file,
+      path => sprintf( '/class_files/%d/%s/%s', $class_id, $file_type, $file ),
+      size => ( stat( "$file_path/$file" ) )[7]
+    );
+    push( @return_files, \%details );
+  }
+
+  return to_json( \@return_files );
+};
+
+
+=head2 POST C</admin/manage_classes/class/:class_id/:file_type/fileupload>
+
+Route to upload class files. Requires Admin.
+
+=cut
+
+post '/admin/manage_classes/class/:class_id/:file_type/fileupload' => require_role Admin => sub
+{
+  my $class_id  = route_parameters->get( 'class_id' );
+  my $file_type = route_parameters->get( 'file_type' );
+
+  my %enum_values = (
+    photos      => 'image',
+    supply_list => 'supply list',
+  );
+
+  return if ( ! defined $class_id or ! defined $file_type );
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $class_dir = path( $BASE_CLASS_FILE_DIR . sprintf( '/%d', $class_id ) );
+  if ( ! -e $class_dir )
+  {
+    mkdir $class_dir;
+    info sprintf( 'Created new class directory: %s', $class_dir );
+  }
+
+  my $upload_path = path( $class_dir . sprintf( '/%s', $file_type ) );
+  if ( ! -e $upload_path )
+  {
+    mkdir $upload_path;
+    info sprintf( 'Created new class directory: %s', $upload_path );
+  }
+
+  if ( uc( $file_type ) eq 'PHOTOS' )
+  {
+    my $thumbs_dir = $upload_path . '/thumbs';
+    if ( ! -e $thumbs_dir )
+    {
+      mkdir $thumbs_dir;
+      info sprintf( 'Created new class directory: %s', $thumbs_dir );
+    }
+  }
+
+  my $upload = upload('file');    # upload object
+
+  $upload->copy_to( sprintf( '%s/%s', $upload_path, $upload->filename ) );
+
+  my $new_file = $SCHEMA->resultset( 'ClassFile' )->create(
+    {
+      class_id   => $class_id,
+      filename   => $upload->filename,
+      filetype   => $enum_values{ $file_type },
+      created_on => $now,
+    }
+  );
+
+  if ( uc( $file_type ) eq 'PHOTOS' )
+  {
+    # Create Thumbnails - Small: max 100px w, Med: max 300px w, Large: max 650px w
+    my @thumbs_config = (
+      { max => 100, prefix => 's', rules => { square => 'crop' } },
+      { max => 300, prefix => 'm', rules => { square => 'crop' } },
+      { max => 650, prefix => 'l', rules => { square => 'crop', dimension_constraint => 1 } },
+    );
+
+    foreach my $thumb ( @thumbs_config )
+    {
+      my $thumbnail = GD::Thumbnail->new( %{$thumb->{rules}} );
+      my $raw       = $thumbnail->create( sprintf( '%s/%s', $upload_path, $upload->filename ), $thumb->{max}, undef );
+      my $mime      = $thumbnail->mime;
+      open    IMG, sprintf( '>%s/thumbs/%s-%s', $upload_path, $thumb->{prefix}, $upload->filename );
+      binmode IMG;
+      print   IMG $raw;
+      close   IMG;
+    }
+  }
+
+  my @return = ( $upload->filename );
+
+  return to_json( \@return );
+};
+
+
+=head2 POST C</admin/manage_classes/class/:class_id/:file_type/delete>
+
+Route to delete a class file and DB record. Admin required.
+
+=cut
+
+post '/admin/manage_classes/class/:class_id/:file_type/delete' => require_role Admin => sub
+{
+  my $class_id       = route_parameters->get( 'class_id' );
+  my $file_type      = route_parameters->get( 'file_type' );
+  my $file_to_delete = body_parameters->get( 'name' );
+  my $op             = body_parameters->get( 'op' );
+
+  if
+  (
+    defined $op
+    and
+    uc( $op ) eq 'DELETE'
+    and
+    defined $file_to_delete
+  )
+  {
+    $file_to_delete =~ s/\.\./\./g;
+    my $file_path = path( $BASE_CLASS_FILE_DIR . sprintf( '/%d/%s/%s', $class_id, $file_type, $file_to_delete ) );
+    info sprintf( 'Attempting to delete class file from: %s', $file_path );
+    if ( -e $file_path )
+    {
+      unlink( $file_path );
+      if ( uc( $file_type ) eq 'PHOTOS' )
+      {
+        foreach my $prefix ( 's-', 'm-', 'l-' )
+        {
+          my $file_path = path( $BASE_CLASS_FILE_DIR . sprintf( '/%d/%s/thumbs/%s%s', $class_id, $file_type, $prefix, $file_to_delete ) );
+          unlink( $file_path );
+        }
+      }
+      $SCHEMA->resultset( 'ClassFile' )->find( { class_id => $class_id, filename => $file_to_delete } )->delete;
+      info sprintf( 'Deleted class file: %s - from class ID: %d', $file_to_delete, $class_id );
+      return sprintf( 'Deleted file %s', $file_to_delete );
+    }
+  }
+
+  return 'File not deleted. Invalid or non-existent file.';
+};
+
+
+=head2 GET C</admin/manage_session>
+
+Route for handling newsletter session info. Requires the user to be an Admin.
+
+=cut
+
+get '/admin/manage_session' => require_role Admin => sub
+{
+  my $session = $SCHEMA->resultset( 'NewsletterSession' )->search( {},
+    {
+      order_by => { -desc => 'created_on' },
+      rows     => 1,
+    }
+  )->single();
+
+  template 'admin_manage_site_files',
+  {
+    data =>
+    {
+      current_session => $session,
+    },
+    title => 'Manage Newsletter Session',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Newsletter Session', current => 1 },
+    ],
+  };
+};
+
+
+=head2 POST C</admin/manage_session>
+
+Route to insert new session information. Reqires user be an Admin.
+
+=cut
+
+post '/admin/manage_session' => require_role Admin => sub
+{
+  my $session_name = body_parameters->get( 'session_name' );
+
+  if ( ! defined $session_name or $session_name eq '' )
+  {
+    flash( error => 'Invalid or unsupplied session name. Could not save new session information.' );
+    redirect '/admin/manage_session';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $new_session = $SCHEMA->resultset( 'NewsletterSession' )->create(
+    {
+      session_name => $session_name,
+      created_on   => $now,
+    }
+  );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Successfully created newsletter session %s', $session_name ),
+  );
+
+  flash( success => sprintf( 'Successfully created new newsletter session <strong>%s</strong>.', $session_name ) );
+  redirect '/admin/manage_session';
+};
+
+
 =head2 GET C</admin/manage_newsletter>
 
 Route for updating/editing the newsletter from Leslie.  Require the user is an Admin.
@@ -2941,6 +3290,104 @@ post '/admin/manage_newsletter/:newsletter_id/update' => require_role Admin => s
 
   flash( success => 'Successfully updated Newsletter.' );
   redirect '/admin/manage_newsletter';
+};
+
+
+=head2 AJAX C</admin/newsletters/get_files>
+
+AJAX route to fetch existing newsletter files. Admin required.
+
+=cut
+
+ajax '/admin/newsletter/get_files' => require_role Admin => sub
+{
+  my $newsletter_path = path( $BASE_UPLOAD_FILE_DIR . '/newsletters' );
+
+  opendir( DIR, $newsletter_path );
+  my @newsletter_files = readdir( DIR );
+  closedir DIR;
+
+  my @return_files = ();
+  foreach my $file ( @newsletter_files )
+  {
+    next if $file =~ /^\./;
+    my %details = (
+      name => $file,
+      path => sprintf( '/downloads/newsletters/%s', $file ),
+      size => ( stat( "$newsletter_path/$file" ) )[7]
+    );
+    push( @return_files, \%details );
+  }
+
+  return to_json( \@return_files );
+};
+
+
+=head2 POST C</admin/newsletter/fileupload>
+
+Route to upload newsletter PDFs. Requires Admin.
+
+=cut
+
+post '/admin/newsletter/fileupload' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $upload_path = path( $BASE_UPLOAD_FILE_DIR . '/newsletters' );
+  if ( ! -e $upload_path )
+  {
+    mkdir $upload_path;
+  }
+
+  my $upload = upload('file');    # upload object
+
+  $upload->copy_to( sprintf( '%s/%s', $upload_path, $upload->filename ) );
+
+  my $new_file = $SCHEMA->resultset( 'SiteFile' )->create(
+    {
+      filename   => $upload->filename,
+      filetype   => 'newsletter',
+      created_on => $now,
+    }
+  );
+
+  my @return = ( $upload->filename );
+
+  return to_json( \@return );
+};
+
+
+=head2 POST C</admin/newsletter/delete>
+
+Route to delete a newsletter file and DB record. Admin required.
+
+=cut
+
+post '/admin/newsletter/delete' => require_role Admin => sub
+{
+  my $file_to_delete = body_parameters->get( 'name' );
+  my $op             = body_parameters->get( 'op' );
+
+  if
+  (
+    defined $op
+    and
+    uc( $op ) eq 'DELETE'
+    and
+    defined $file_to_delete
+  )
+  {
+    $file_to_delete =~ s/\.\./\./g;
+    my $file_path = path( $BASE_UPLOAD_FILE_DIR . sprintf( '/newsletters/%s', $file_to_delete ) );
+    if ( -e $file_path )
+    {
+      unlink( $file_path );
+      $SCHEMA->resultset( 'SiteFile' )->search( { filename => $file_to_delete }, { rows => 1 } )->single()->delete;
+      return sprintf( 'Deleted file %s', $file_to_delete );
+    }
+  }
+
+  return 'File not deleted. Invalid or non-existent file.';
 };
 
 

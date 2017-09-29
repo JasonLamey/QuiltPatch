@@ -27,8 +27,9 @@
                 <div>
                   [% item.description %]
                   [% IF item.no_supply_list == 0 %]
-                    [% IF item.supply_list_filename.defined && item.supply_list_filename != '' %]
-                    Ask or <a href="/downloads/supply_lists/[% item.supply_list_filename %]">click here</a> for a supply list.
+                    [% supply_list = item.get_supply_list %]
+                    [% IF supply_list.defined && supply_list.filename != '' %]
+                    Ask or <a href="/class_files/[% item.id %]/supply_list/[% supply_list.filename %]">click here</a> for a supply list.
                     [% ELSE %]
                     Ask for a supply list.
                     [% END %]
@@ -194,6 +195,19 @@
 
                   </div>
                 </div>
+
+                [% photos = item.get_photos %]
+                [% IF photos.size > 0 %]
+                <div class="row small-up-2 medium-up-4 align-center">
+                  [% FOREACH photo IN photos %]
+                  <div class="column">
+                    <a href="/class_files/[% item.id %]/photos/[% photo.filename %]" data-lightbox="class-[% item.id %]" data-title="[% item.title %]">
+                      <img class="thumbnail" src="/class_files/[% item.id %]/photos/thumbs/s-[% photo.filename %]">
+                    </a>
+                  </div>
+                  [% END %]
+                </div>
+                [% END %]
 
               </div>
             </div>

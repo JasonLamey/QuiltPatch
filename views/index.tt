@@ -35,6 +35,15 @@
                 [% END %]
 
               </div>
+
+              <div class="events-group">
+                <h6>Book Club</h6>
+
+                [% FOREACH item IN data.bookclub %]
+                  [% PROCESS bookclubrow %]
+                [% END %]
+
+              </div>
             </div>
           </div>
         </div>
@@ -44,7 +53,7 @@
             <div class="row column">
               <div class="callout">
                 <h4>What's New at the Quilt Patch</h4>
-                <p>Classes and events for the summer have been scheduled and the newsletter has been published. Click here for the <a href="/downloads/newsletters/QP-2017-Fall.pdf" target="_blank">Fall 2017 Newsletter</a>. Come in or call to enroll.</p>
+                <p>Classes and events for the summer have been scheduled and the newsletter has been published. Click here for the <a href="/downloads/newsletters/[% newsletter_file.filename %]" target="_blank">[% newsletter_session.session_name %] Newsletter</a>. Come in or call to enroll.</p>
                 <p>For information about upcoming sales, Project Linus, and other events, <a href="/qp_news">click here</a> for Quilt Patch News.</p>
                 <h4>Quilt Patch Classes</h4>
                 <p>For a complete list of classes offered by the Quilt Patch or to find the classes offered by your favorite teachers, <a href="/classes">click here</a>.</p>
@@ -82,11 +91,10 @@
                   <div class="small-12 columns article-row">
                     <h5>[% item.title %]</h5>
                     <span class="byline">Posted: [% date.format(item.timestamp, '%a, %d %B %Y') %]</span><br>
-                    <p>
                     [% IF item.blurb %]
-                    [% item.blurb %]<br>
+                    [% item.blurb %]
                     [% END %]
-                    <a href="/news/[% item.news_type %]/[% item.id %]">Click here for more information.</a></p>
+                    <p><a href="/news/[% item.news_type %]/[% item.id %]">Click here for more information.</a></p>
                   </div>
                 </div>
 [% END %]
@@ -112,6 +120,17 @@
                   </div>
                   <div class="small-6 columns event-dates">
                     [% date.format(item.start_datetime, '%a, %d %B') %]
+                  </div>
+                </div>
+[% END %]
+
+[% BLOCK bookclubrow %]
+                <div class="row index-event">
+                  <div class="small-6 columns event-title">
+                    <em>[% item.book %]</em> by [% item.author %]
+                  </div>
+                  <div class="small-6 columns event-dates">
+                    [% date.format(item.date _ ' 19:30:00', '%a, %d %B<br>@ %l:%M%p') %]
                   </div>
                 </div>
 [% END %]
