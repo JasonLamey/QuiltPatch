@@ -26,16 +26,16 @@ use QP::Util;
 our $VERSION = '2.0';
 
 const my $DOMAIN_ROOT               => 'http://www.quiltpatchva.com';
-const my $SCHEMA    => QP::Schema->db_connect();
-const my $DT_PARSER => $SCHEMA->storage->datetime_parser;
+const my $SCHEMA                    => QP::Schema->db_connect();
+const my $DT_PARSER                 => $SCHEMA->storage->datetime_parser;
 const my $USER_SESSION_EXPIRE_TIME  => 172800; # 48 hours in seconds.
 const my $ADMIN_SESSION_EXPIRE_TIME => 600;    # 10 minutes in seconds.
 const my $DPAE_REALM                => 'site'; # Dancer2::Plugin::Auth::Extensible realm
-const my $DATA_FORM_VALIDATOR  => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
-const my $BASE_UPLOAD_FILE_DIR => path( config->{ appdir }, 'public/downloads' );
-const my $BASE_CLASS_FILE_DIR  => path( config->{ appdir }, 'public/class_files' );
-const my $MAX_IMAGE_FILE_SIZE  => 1048576;     # 10MB in bytes.
-const my $MAX_PDF_FILE_SIZE    => 1048576;     # 10MB in bytes.
+const my $DATA_FORM_VALIDATOR       => ''; # TEMPORARY TO KILL ERROR WHILE IMPORTING ADMIN CODE
+const my $BASE_UPLOAD_FILE_DIR      => path( config->{ appdir }, 'public/downloads' );
+const my $BASE_CLASS_FILE_DIR       => path( config->{ appdir }, 'public/class_files' );
+const my $MAX_IMAGE_FILE_SIZE       => 1048576;     # 10MB in bytes.
+const my $MAX_PDF_FILE_SIZE         => 1048576;     # 10MB in bytes.
 
 $SCHEMA->storage->debug(0); # Turns on DB debuging. Turn off for production.
 
@@ -380,7 +380,7 @@ get '/classes/:group_id' => sub
                                                       {
                                                         prefetch =>
                                                         [
-                                                          'dates', 'classteachers'
+                                                          'dates', { 'classteachers' => 'teachers' },
                                                         ],
                                                         order_by =>
                                                         {
@@ -3077,6 +3077,15 @@ post '/admin/manage_classes/class/:class_id/:file_type/fileupload' => require_ro
     }
   }
 
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( '%s file &quot;%s&quot; uploaded for class ID %d.',
+                    ucfirst( $file_type), $upload->filename, $class_id ),
+  );
+
   my @return = ( $upload->filename );
 
   return to_json( \@return );
@@ -3120,6 +3129,16 @@ post '/admin/manage_classes/class/:class_id/:file_type/delete' => require_role A
         }
       }
       $SCHEMA->resultset( 'ClassFile' )->find( { class_id => $class_id, filename => $file_to_delete } )->delete;
+
+      my $logged = QP::Log->admin_log
+      (
+        admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+        ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+        log_level   => 'Info',
+        log_message => sprintf( '%s file &quot;%s&quot; deleted for class ID %d.',
+                        ucfirst( $file_type), $file_to_delete, $class_id ),
+      );
+
       info sprintf( 'Deleted class file: %s - from class ID: %d', $file_to_delete, $class_id );
       return sprintf( 'Deleted file %s', $file_to_delete );
     }
@@ -3351,6 +3370,14 @@ post '/admin/newsletter/fileupload' => require_role Admin => sub
     }
   );
 
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Newsletter file &quot;%s&quot; uploaded.', $upload->filename ),
+  );
+
   my @return = ( $upload->filename );
 
   return to_json( \@return );
@@ -3382,6 +3409,15 @@ post '/admin/newsletter/delete' => require_role Admin => sub
     if ( -e $file_path )
     {
       unlink( $file_path );
+
+      my $logged = QP::Log->admin_log
+      (
+        admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+        ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+        log_level   => 'Info',
+        log_message => sprintf( 'Newsletter file &quot;%s&quot; deleted.', $file_to_delete ),
+      );
+
       $SCHEMA->resultset( 'SiteFile' )->search( { filename => $file_to_delete }, { rows => 1 } )->single()->delete;
       return sprintf( 'Deleted file %s', $file_to_delete );
     }
@@ -3749,646 +3785,6 @@ get '/admin/manage_product_categories' => require_role Admin => sub
         ],
         title => 'Manage Product Categories and Subcategories',
       };
-};
-
-
-=head2 POST C</admin/manage_product_categories/add>
-
-Route for adding a new product category. Requires user is logged in and an Admin.
-
-=cut
-
-post '/admin/manage_product_categories/add' => require_role Admin => sub
-{
-  my $form_input = body_parameters->as_hashref;
-
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_new_product_category_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your product category information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $category_exists  = $SCHEMA->resultset( 'ProductCategory' )->count( { category  => body_parameters->get( 'category' ) } );
-  my $shorthand_exists = $SCHEMA->resultset( 'ProductCategory' )->count( { shorthand => body_parameters->get( 'shorthand' ) } );
-
-  if ( $category_exists )
-  {
-    flash error => sprintf( 'A category called &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'category' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  if ( $shorthand_exists )
-  {
-    flash error => sprintf( 'A category with shorthand &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'shorthand' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
-  my $new_product_category = $SCHEMA->resultset( 'ProductCategory' )->create(
-    {
-      category   => body_parameters->get( 'category' ),
-      shorthand  => body_parameters->get( 'shorthand' ),
-      created_on => $now,
-    }
-  );
-
-  if
-  (
-    not defined $new_product_category
-    or
-    ref( $new_product_category ) ne 'QP::Schema::Result::ProductCategory'
-  )
-  {
-    flash error => sprintf( 'Something went wrong. Could not save Product Category &quot;<strong>%s</strong>&quot;.', body_parameters->get( 'category' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  info sprintf( 'Created new product category >%s<, ID: >%s<, on %s', body_parameters->get( 'category' ), $new_product_category->id, $now );
-
-  flash success => sprintf( 'Successfully created Product Category &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'category' ) );
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Category &quot;%s&quot; created', body_parameters->get( 'category' ) ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 GET C</admin/manage_product_categories/:product_category_id/delete>
-
-Route to delete a product category. Requires the user to be logged in and an Admin.
-
-=cut
-
-get '/admin/manage_product_categories/:product_category_id/delete' => require_role Admin => sub
-{
-  my $product_category_id = route_parameters->get( 'product_category_id' );
-
-  my $product_category = $SCHEMA->resultset( 'ProductCategory' )->find( $product_category_id );
-
-  if
-  (
-    not defined $product_category
-    or
-    ref( $product_category ) ne 'QP::Schema::Result::ProductCategory'
-  )
-  {
-    flash error => sprintf( 'Unknown or invalid product category.' );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my @subcategories = $product_category->product_subcategories;
-  if ( scalar( @subcategories ) > 0 )
-  {
-    flash error => sprintf( 'Unable to delete product category &quot;<strong>%s</strong>&quot;. It still has associated subcategories.<br>Remove or reassign those subcategories, first.',
-                                $product_category->category );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $category = $product_category->category;
-
-  my $deleted = $product_category->delete();
-  if ( defined $deleted and $deleted < 1 )
-  {
-    flash error => sprintf( 'Unabled to delete product category &quot;<strong>%s</strong>&quot;.', $product_category->category );
-    redirect '/admin/manage_product_categories';
-  }
-
-  flash success => sprintf( 'Successfully deleted product category &quot;<strong>%s</strong>&quot;.', $category );
-
-  info sprintf( 'Deleted product category >%s<, ID: >%s<, on %s', $category, $product_category_id, DateTime->now( time_zone => 'America/New_York' )->datetime );
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Category &quot;%s&quot; deleted', $category ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 GET C</admin/manage_product_categories/:product_category_id/edit>
-
-Route to the product category edit form. Requires a logged in user with Admin role.
-
-=cut
-
-get '/admin/manage_product_categories/:product_category_id/edit' => require_role Admin => sub
-{
-  my $product_category_id = route_parameters->get( 'product_category_id' );
-
-  my $product_category = $SCHEMA->resultset( 'ProductCategory' )->find( $product_category_id );
-
-  if
-  (
-    not defined $product_category
-    or
-    ref( $product_category ) ne 'QP::Schema::Result::ProductCategory'
-  )
-  {
-    flash error => sprintf( 'Unknown or invalid product category.' );
-    redirect '/admin/manage_product_categories';
-  }
-
-  template 'admin_manage_product_categories_edit.tt',
-    {
-      data =>
-      {
-        product_category => $product_category,
-      },
-      breadcrumbs =>
-      [
-        { name => 'Admin', link => '/admin' },
-        { name => 'Manage Product Categories and Subcategories', link => '/admin/manage_product_categories' },
-        { name => sprintf( 'Edit Product Category (%s)', $product_category->category ), current => 1 },
-      ],
-      title => 'Edit Product Category',
-    };
-};
-
-
-=head2 POST C</admin/manage_product_categories/:product_category_id/update>
-
-Route to save updated product category information. Requires logged in user to be Admin.
-
-=cut
-
-post '/admin/manage_product_categories/:product_category_id/update' => require_role Admin => sub
-{
-  my $product_category_id = route_parameters->get( 'product_category_id' );
-
-  my $form_input = body_parameters->as_hashref;
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_product_category_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your product category information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $category_exists  = $SCHEMA->resultset( 'ProductCategory' )->count(
-    {
-      category  => body_parameters->get( 'category' )
-    },
-    {
-      where =>
-      {
-        id => { '!=' => $product_category_id },
-      },
-    },
-  );
-  my $shorthand_exists = $SCHEMA->resultset( 'ProductCategory' )->count(
-    {
-      shorthand => body_parameters->get( 'shorthand' ),
-    },
-    {
-      where =>
-      {
-        id => { '!=' => $product_category_id },
-      },
-    },
-  );
-
-  if ( $category_exists )
-  {
-    flash error => sprintf( 'A category called &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'category' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  if ( $shorthand_exists )
-  {
-    flash error => sprintf( 'A category with shorthand &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'shorthand' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $product_category = $SCHEMA->resultset( 'ProductCategory' )->find( $product_category_id );
-
-  my $orig_product_category = Clone::clone( $product_category );
-
-  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
-  $product_category->category( body_parameters->get( 'category' ) );
-  $product_category->shorthand( body_parameters->get( 'shorthand' ) );
-  $product_category->updated_on( $now );
-
-  $product_category->update;
-
-  flash success => sprintf( 'Successfully updated product category &quot;<strong>%s</strong>&quot;.', $product_category->category );
-
-  info sprintf( 'Updated product category >%s<, ID: >%s<, on %s', $product_category->category, $product_category_id, $now );
-
-  my $new =
-  {
-    category  => body_parameters->get( 'category' ),
-    shorthand => body_parameters->get( 'shorthand' )
-  };
-  my $old =
-  {
-    category  => $orig_product_category->category,
-    shorthand => $orig_product_category->shorthand
-  };
-
-  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
-
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Category updated: %s', join( ', ', @{ $diffs } ) ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 POST C</admin/manage_product_categories/subcategory/add>
-
-Route for adding a new product subcategory. Requires user is logged in and an Admin.
-
-=cut
-
-post '/admin/manage_product_categories/subcategory/add' => require_role Admin => sub
-{
-  my $form_input = body_parameters->as_hashref;
-
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_new_product_subcategory_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your product subcategory information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $subcategory_exists  = $SCHEMA->resultset( 'ProductSubcategory' )->count
-  (
-    {
-      subcategory  => body_parameters->get( 'subcategory' ),
-      category_id  => body_parameters->get( 'category_id' )
-    }
-  );
-
-  if ( $subcategory_exists )
-  {
-    flash error => sprintf( 'A subcategory called &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'subcategory' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
-  my $new_product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->create(
-    {
-      subcategory => body_parameters->get( 'subcategory' ),
-      category_id => body_parameters->get( 'category_id' ),
-      created_on  => $now,
-    }
-  );
-
-  if
-  (
-    not defined $new_product_subcategory
-    or
-    ref( $new_product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
-  )
-  {
-    flash error => sprintf( 'Something went wrong. Could not save Product Subcategory &quot;<strong>%s</strong>&quot;.', body_parameters->get( 'subcategory' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  info sprintf( 'Created new product subcategory >%s<, ID: >%s<, on %s', body_parameters->get( 'subcategory' ), $new_product_subcategory->id, $now );
-
-  flash success => sprintf( 'Successfully created Product Subcategory &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'subcategory' ) );
-
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Subcategory &quot;%s&quot; (%s) created', body_parameters->get( 'subcategory' ), $new_product_subcategory->id ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 GET C</admin/manage_product_categories/subcategory/:product_subcategory_id/delete>
-
-Route to delete a product subcategory. Requires the user to be logged in and an Admin.
-
-=cut
-
-get '/admin/manage_product_categories/subcategory/:product_subcategory_id/delete' => require_role Admin => sub
-{
-  my $product_subcategory_id = route_parameters->get( 'product_subcategory_id' );
-
-  my $product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->find( $product_subcategory_id );
-
-  if
-  (
-    not defined $product_subcategory
-    or
-    ref( $product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
-  )
-  {
-    flash error => sprintf( 'Unknown or invalid product subcategory.' );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my @products = $product_subcategory->products;
-  if ( scalar( @products ) > 0 )
-  {
-    flash error => sprintf( 'Unable to delete product subcategory &quot;<strong>%s</strong>&quot;. It still has associated products.<br>Remove or reassign those products, first.',
-                                $product_subcategory->subcategory );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $subcategory = $product_subcategory->subcategory;
-
-  my $deleted = $product_subcategory->delete();
-  if ( defined $deleted and $deleted < 1 )
-  {
-    flash error => sprintf( 'Unabled to delete product subcategory &quot;<strong>%s</strong>&quot;.', $product_subcategory->subcategory );
-    redirect '/admin/manage_product_categories';
-  }
-
-  flash success => sprintf( 'Successfully deleted product subcategory &quot;<strong>%s</strong>&quot;.', $subcategory );
-
-  info sprintf( 'Deleted product subcategory >%s<, ID: >%s<, on %s', $subcategory, $product_subcategory_id, DateTime->now( time_zone => 'America/New_York' )->datetime );
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Subcategory &quot;%s&quot; (%s) deleted.', $subcategory, $product_subcategory_id ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 GET C</admin/manage_product_categories/subcategory/:product_subcategory_id/edit>
-
-Route to the product subcategory edit form. Requires a logged in user with Admin role.
-
-=cut
-
-get '/admin/manage_product_categories/subcategory/:product_subcategory_id/edit' => require_role Admin => sub
-{
-  my $product_subcategory_id = route_parameters->get( 'product_subcategory_id' );
-
-  my $product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->find( $product_subcategory_id );
-
-  if
-  (
-    not defined $product_subcategory
-    or
-    ref( $product_subcategory ) ne 'QP::Schema::Result::ProductSubcategory'
-  )
-  {
-    flash error => sprintf( 'Unknown or invalid product subcategory.' );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my @product_categories = $SCHEMA->resultset( 'ProductCategory' )->search( undef,
-                                                                            { order_by => { -asc => 'category' } }
-                                                                          );
-
-  template 'admin_manage_product_subcategories_edit.tt',
-    {
-      data =>
-      {
-        product_categories  => \@product_categories,
-        product_subcategory => $product_subcategory,
-      },
-      breadcrumbs =>
-      [
-        { name => 'Admin', link => '/admin' },
-        { name => 'Manage Product Categories and Subcategories', link => '/admin/manage_product_categories' },
-        { name => sprintf( 'Edit Product Subcategory (%s)', $product_subcategory->subcategory ), current => 1 },
-      ],
-      title => 'Manage Product Subcategories',
-    };
-};
-
-
-=head2 POST C</admin/manage_product_categories/subcategory/:product_subcategory_id/update>
-
-Route to save updated product subcategory information. Requires logged in user to be Admin.
-
-=cut
-
-post '/admin/manage_product_categories/subcategory/:product_subcategory_id/update' => require_role Admin => sub
-{
-  my $product_subcategory_id = route_parameters->get( 'product_subcategory_id' );
-
-  my $form_input = body_parameters->as_hashref;
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_product_subcategory_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your product subcategory information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $subcategory_exists  = $SCHEMA->resultset( 'ProductSubcategory' )->count(
-    {
-      subcategory  => body_parameters->get( 'subcategory' )
-    },
-    {
-      where =>
-      {
-        id => { '!=' => $product_subcategory_id },
-      },
-    },
-  );
-
-  if ( $subcategory_exists )
-  {
-    flash error => sprintf( 'A subcategory called &quot;<strong>%s</strong>&quot; already exists.', body_parameters->get( 'subcategory' ) );
-    redirect '/admin/manage_product_categories';
-  }
-
-  my $product_subcategory = $SCHEMA->resultset( 'ProductSubcategory' )->find( $product_subcategory_id );
-  my $orig_product_subcategory = Clone::clone( $product_subcategory );
-
-  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
-  $product_subcategory->subcategory( body_parameters->get( 'subcategory' ) );
-  $product_subcategory->category_id( body_parameters->get( 'category_id' ) );
-  $product_subcategory->updated_on( $now );
-
-  $product_subcategory->update;
-
-  flash success => sprintf( 'Successfully updated product subcategory &quot;<strong>%s</strong>&quot;.', $product_subcategory->subcategory );
-
-  info sprintf( 'Updated product category >%s<, ID: >%s<, on %s', $product_subcategory->subcategory, $product_subcategory_id, $now );
-
-  my $new =
-  {
-    subcategory => body_parameters->get( 'subcategory' ),
-    category_id => body_parameters->get( 'category_id' )
-  };
-  my $old =
-  {
-    subcategory => $orig_product_subcategory->subcategory,
-    category_id => $orig_product_subcategory->category_id
-  };
-
-  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
-
-  my $logged = QP::Log->admin_log
-  (
-    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
-    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
-    log_level   => 'Info',
-    log_message => sprintf( 'Product Subcategory updated: %s', join( ', ', @{ $diffs } ) ),
-  );
-
-  redirect '/admin/manage_product_categories';
-};
-
-
-=head2 GET C</admin/manage_featured_products>
-
-Route to manage which Products are featured for each subcategory. Requires Admin.
-
-=cut
-
-get '/admin/manage_featured_products' => require_role Admin => sub
-{
-  my @products = $SCHEMA->resultset( 'Product' )->search( {},
-    {
-      order_by => [ 'product_category.category', 'product_subcategory.subcategory', 'me.name' ],
-      prefetch =>
-      [
-        { 'product_subcategory' => 'product_category' },
-        'featured_product',
-      ],
-    },
-  );
-
-  template 'admin_manage_featured_products',
-  {
-    data =>
-    {
-      products => \@products,
-    },
-    breadcrumbs =>
-    [
-      { name => 'Admin', link => '/admin' },
-      { name => 'Manage Featured Products', current => 1 },
-    ],
-    title => 'Manage Featured Products',
-  };
-};
-
-=head2 POST C</admin/manage_product_categories/update>
-
-Route to update all featured product entries. Requires Admin access.
-
-=cut
-
-post '/admin/manage_featured_products/update' => require_role Admin => sub
-{
-  my $form_input = body_parameters->as_hashref;
-
-  my @updated = ();
-  foreach my $key ( sort keys %{$form_input} )
-  {
-    if ( $key =~ m/^(featured_)(\d+)_old$/ )
-    {
-      if
-      (
-        $form_input->{$1.$2} ne $form_input->{$key}
-        or
-        $form_input->{'expires_on_' . $2} ne $form_input->{'expires_on_' . $2 . '_old'}
-      )
-      {
-        # If featured_n = 1, update or create it. Otherwise, delete it.
-        if ( $form_input->{$1.$2} == 1 )
-        {
-          my $featured_product = $SCHEMA->resultset( 'FeaturedProduct' )->update_or_create(
-            {
-              product_id             => $2,
-              product_subcategory_id => $form_input->{'product_subcategory_id_' . $2},
-              expires_on             => ( $form_input->{'expires_on_' . $2} ) ? $form_input->{'expires_on_' . $2} : undef,
-              created_on             => ( $form_input->{'created_on_' . $2} ) ? $form_input->{'created_on_' . $2}
-                                                                              : DateTime->today( time_zone => 'America/New_York' )->datetime,
-            },
-            { key => 'productid_subcategoryid' },
-          );
-
-          push( @updated, sprintf( 'Featuring &quot;<strong>%s</strong>&quot;', $featured_product->product->name ) );
-        }
-        else
-        {
-          my $featured_product = $SCHEMA->resultset( 'FeaturedProduct' )->find(
-            {
-              product_id             => $2,
-              product_subcategory_id => $form_input->{'product_subcategory_id_' . $2},
-            }
-          );
-
-          push( @updated, sprintf( 'Unfeatured &quot;<strong>%s</strong>&quot;', $featured_product->product->name ) );
-
-          $featured_product->delete;
-        }
-      }
-    }
-  }
-
-  flash success => join( '<br>', @updated );
-
-  redirect '/admin/manage_featured_products';
 };
 
 
@@ -4982,6 +4378,7 @@ get '/admin/manage_users' => require_role Admin => sub
       {
         users => \@users,
       },
+      title => 'Manage User Accounts',
       breadcrumbs =>
       [
         { name => 'Admin', link => '/admin' },
@@ -5007,6 +4404,7 @@ get '/admin/manage_users/add' => require_role Admin => sub
       {
         roles => \@roles,
       },
+      title => 'Create User Account',
       breadcrumbs =>
       [
         { name => 'Admin', link => '/admin' },
@@ -5026,25 +4424,6 @@ Route to save the new account data to the database. Requires Admin access.
 post '/admin/manage_users/create' => require_role Admin => sub
 {
   my $form_input = body_parameters->as_hashref;
-
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_add_user_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your user account information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
 
   my $send_confirmation = ( body_parameters->get( 'confirmed' ) == 1 ) ? 1 : 0;
   my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
@@ -5132,6 +4511,7 @@ get '/admin/manage_users/:user_id/edit' => require_role Admin => sub
         user  => $user,
         roles => \@roles,
       },
+      title => 'Edit User Account',
       breadcrumbs =>
       [
         { name => 'Admin', link => '/admin' },
@@ -5153,25 +4533,6 @@ post '/admin/manage_users/:user_id/update' => require_role Admin => sub
   my $user_id = route_parameters->get( 'user_id' );
 
   my $form_input = body_parameters->as_hashref;
-
-  my $form_results = $DATA_FORM_VALIDATOR->check( $form_input, 'admin_edit_user_form' );
-
-  if ( $form_results->has_invalid or $form_results->has_missing )
-  {
-    my @errors = ();
-    for my $invalid ( $form_results->invalid )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> is invalid: %s<br>", $invalid, $form_results->invalid( $invalid ) ) );
-    }
-
-    for my $missing ( $form_results->missing )
-    {
-      push( @errors, sprintf( "<strong>%s</strong> needs to be filled out.<br>", $missing ) );
-    }
-
-    flash( error => sprintf( "Errors have occurred in your user account information.<br>%s", join( '<br>', @errors ) ) );
-    redirect '/';
-  }
 
   my $user = $SCHEMA->resultset( 'User' )->find( $user_id );
 

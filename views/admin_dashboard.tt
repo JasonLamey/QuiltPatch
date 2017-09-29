@@ -17,6 +17,8 @@
                   <li><a href="/admin/manage_events">Manage Calendar Events</a></li>
                   <li><a href="/admin/manage_newsletter">Manage Leslie's Letter</a></li>
                   <li><a href="/admin/manage_book_club">Manage Book Club</a></li>
+                  [%# <li><a href="/admin/manage_links">Manage Links</a></li> %]
+                  <li>Manage Links</li>
                 </ul>
               </div>
             </div>
