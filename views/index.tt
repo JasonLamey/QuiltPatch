@@ -54,7 +54,7 @@
               <div class="callout">
                 <h4>What's New at the Quilt Patch</h4>
                 <p>Classes and events for the summer have been scheduled and the newsletter has been published. Click here for the <a href="/downloads/newsletters/[% newsletter_file.filename %]" target="_blank">[% newsletter_session.session_name %] Newsletter</a>. Come in or call to enroll.</p>
-                <p>For information about upcoming sales, Project Linus, and other events, <a href="/qp_news">click here</a> for Quilt Patch News.</p>
+                <p>For information about upcoming sales, Project Linus, and other events, <a href="/news/QP">click here</a> for Quilt Patch News.</p>
                 <h4>Quilt Patch Classes</h4>
                 <p>For a complete list of classes offered by the Quilt Patch or to find the classes offered by your favorite teachers, <a href="/classes">click here</a>.</p>
               </div>
