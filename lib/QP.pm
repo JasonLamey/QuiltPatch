@@ -809,10 +809,10 @@ get '/reset_my_password/?:code?' => sub
 
   authenticate_user
   (
-    $username, $new_temp_pw,
+    $username, $new_temp_pw
   );
 
-  flash( success => sprintf( 'Welcome back, %s!', $username ) ) );
+  flash( success => sprintf( 'Welcome back, %s!', $username ) );
   redirect sprintf( '/user/change_password/%s', $new_temp_pw );
 };
 
