@@ -1,0 +1,33 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h4>Manage Link Groups</h4>
+    <a href="/admin/manage_links/groups/add" class="button">Add New Link Group</a><br>
+
+    <table class="hover striped">
+      <thead>
+        <tr>
+          <th>Group</th>
+          <th>Sort Order</th>
+          <th>Number of Links</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+      [% FOREACH group IN data.link_groups %]
+        <tr>
+          <td>[% group.name %]</td>
+          <td>[% group.order_by %]</td>
+          <td>[% group.links.size || 0 %]</td>
+          <td>
+            <a href="/admin/manage_links/groups/[% group.id %]/edit" class="button warning tiny">Edit</a>
+            [% IF group.links.size > 0 %]<span data-tooltip aria-haspopup="true" class="has-tip top" data-disable-hover="false" tabindex="2" title="A Link Group must have zero links to be deleted."><button class="button alert tiny" onClick="return false;" disabled>Delete</button></span>[% ELSE %]<button class="button alert tiny" onClick="promptForDelete( '[% group.name %]', '/admin/manage_links/groups/[% group.id %]/delete' );">Delete</button>[% END %]
+          </td>
+        </tr>
+      [% END %]
+      </tbody>
+    </table>
+
+  </div>
+</div>

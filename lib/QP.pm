@@ -55,6 +55,9 @@ hook before_template_render => sub
 };
 
 
+=head1 GENERAL ROUTES
+
+
 =head2 GET C</>
 
 Route to get to the default page.
@@ -720,6 +723,10 @@ get '/directions' => sub
 # ROUTES THAT INVOLVE LOGIN
 #########################################################################
 
+
+=head1 ROUTES INVOLVING LOGIN/SIGN UP
+
+
 =head2 GET C</reset_password>
 
 Route to reset a user's password.
@@ -1232,6 +1239,8 @@ post '/account_confirmation' => sub
 # ROUTES THAT REQUIRE THE USER BE LOGGED IN
 ###########################################################################
 
+=head1 ROUTES REQUIRING THE USER BE LOGGED IN
+
 
 =head2 AJAX C</bookmark_class/:class_id/:action>
 
@@ -1686,7 +1695,7 @@ post '/admin/manage_classes/groups/create' => require_role Admin => sub
 
 =head2 GET C</admin/manage_classes/groups/:group_id/edit>
 
-Route for presenting the edit product form. Requires the user be logged in and an Admin.
+Route for presenting the edit class groups form. Requires the user be logged in and an Admin.
 
 =cut
 
@@ -3652,142 +3661,6 @@ get '/admin/manage_book_club/:date_id/delete' => require_role Admin => sub
 };
 
 
-=head2 POST C</admin/manage_products/:product_id/upload>
-
-Route for uploading product images and associating them to the indicated product. Require the user is an Admin.
-
-=cut
-
-post '/admin/manage_products/:product_id/upload' => require_role Admin => sub
-{
-  my $product_id  = route_parameters->get( 'product_id' );
-  my $upload_data = request->upload( 'qqfile' );    # upload object
-
-  # Save file to product image directory.
-  my $product_dir = path( config->{ appdir }, sprintf( 'public/images/products/%s/', $product_id ) );
-  mkdir $product_dir if not -e $product_dir;
-
-  my $filepath = $product_dir . '/' . $upload_data->basename;
-  my $copied = $upload_data->copy_to( $filepath );
-
-  if ( ! $copied )
-  {
-    return to_json( { success => 0, error => 'Could not save file to the filesystem.', preventRetry => 1 } );
-  }
-
-  # Create Thumbnails - Small: max 250px w, Med: max 400px w, Large: max 650px w
-  my @thumbs_config = (
-    { max => 250, prefix => 's', rules => { square => 'crop' } },
-    { max => 400, prefix => 'm', rules => { square => 'crop' } },
-    { max => 650, prefix => 'l', rules => { square => 'crop', dimension_constraint => 1 } },
-  );
-
-  foreach my $thumb ( @thumbs_config )
-  {
-    my $thumbnail = GD::Thumbnail->new( %{$thumb->{rules}} );
-    my $raw       = $thumbnail->create( $product_dir . '/' . $upload_data->basename, $thumb->{max}, undef );
-    my $mime      = $thumbnail->mime;
-    open    IMG, sprintf( '>%s/%s-%s', $product_dir, $thumb->{prefix}, $upload_data->basename );
-    binmode IMG;
-    print   IMG $raw;
-    close   IMG;
-  }
-
-  # Save new database record of image associated to product.
-  my $new_image = $SCHEMA->resultset( 'ProductImage' )->create(
-    {
-      product_id => $product_id,
-      filename   => $upload_data->basename,
-      highlight  => 0,
-      created_on => DateTime->now( time_zone => 'America/New_York' )->datetime,
-    },
-  );
-
-  return to_json( { success => 1 } );
-};
-
-
-=head2 POST C</admin/manage_products/:product_id/images/update>
-
-Route for updating the highlighted image on a product. Requires Admin user.
-
-=cut
-
-post '/admin/manage_products/:product_id/images/update' => require_role Admin => sub
-{
-  my $product_id = route_parameters->get( 'product_id' );
-  my $new_highlight_id = body_parameters->get( 'highlight' );
-
-  if ( ! $new_highlight_id )
-  {
-    flash notify => 'No highlighted image selected.';
-    redirect sprintf( '/admin/manage_products/%s/edit', $product_id );
-  }
-
-  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
-
-  my $highlighted_image = $SCHEMA->resultset( 'ProductImage' )->find( { product_id => $product_id, highlight => 1 } );
-  if
-  (
-    defined $highlighted_image
-    and
-    ref( $highlighted_image ) eq 'QP::Schema::Result::ProductImage'
-  )
-  {
-    if ( $highlighted_image->id == $new_highlight_id )
-    {
-      flash notify => 'Highlighted image unchanged.';
-      redirect sprintf( '/admin/manage_products/%s/edit', $product_id );
-    }
-    else
-    {
-      $highlighted_image->highlight( 0 );
-      $highlighted_image->updated_on( $now );
-      $highlighted_image->update;
-    }
-  }
-
-  my $new_highlight = $SCHEMA->resultset( 'ProductImage' )->find( $new_highlight_id );
-  $new_highlight->highlight( 1 );
-  $new_highlight->updated_on( $now );
-  $new_highlight->update;
-
-  flash success => sprintf( 'Highlighted Image set to <strong>%s</strong>.', $new_highlight->filename );
-  redirect sprintf( '/admin/manage_products/%s/edit', $product_id );
-};
-
-
-=head2 GET C</admin/manage_product_categories>
-
-Route to manage product categories and subcategories. Requires user to be logged in and an Admin.
-
-=cut
-
-get '/admin/manage_product_categories' => require_role Admin => sub
-{
-  my @product_categories = $SCHEMA->resultset( 'ProductCategory' )->search( undef,
-                                                                            { order_by => { -asc => 'category' } }
-                                                                          );
-  my @product_subcategories = $SCHEMA->resultset( 'ProductSubcategory' )->search( undef,
-                                                                                  { order_by => { -asc => 'subcategory' } }
-                                                                                );
-  template 'admin_manage_product_categories',
-      {
-        data =>
-        {
-          product_categories    => \@product_categories,
-          product_subcategories => \@product_subcategories,
-        },
-        breadcrumbs =>
-        [
-          { name => 'Admin', link => '/admin' },
-          { name => 'Manage Product Categories and Subcategories', current => 1 },
-        ],
-        title => 'Manage Product Categories and Subcategories',
-      };
-};
-
-
 =head2 GET C</admin/manage_news>
 
 Route to managing news items.  Requires Admin user.
@@ -4888,6 +4761,488 @@ get '/admin/manage_roles/:role_id/delete' => require_role Admin => sub
   );
 
   redirect '/admin/manage_roles';
+};
+
+
+=head2 GET C</admin/manage_links/groups>
+
+Route to managing Link Groups. Admin required.
+
+=cut
+
+get '/admin/manage_links/groups' => require_role Admin => sub
+{
+  my @link_groups = $SCHEMA->resultset( 'LinkGroup' )->search( {},
+    {
+      prefetch => 'links',
+      order_by => { -asc => 'order_by' },
+    }
+  )->all;
+
+  template 'admin_manage_links_groups.tt',
+  {
+    data =>
+    {
+      link_groups => \@link_groups,
+    },
+    title => 'Manage Link Groups',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Link Groups', current => 1 },
+    ],
+  };
+};
+
+
+=head2 GET C</admin/manage_links/groups/add>
+
+Route to the Add Links Group form. Admin required.
+
+=cut
+
+get '/admin/manage_links/groups/add' => require_role Admin => sub
+{
+  template 'admin_manage_links_group_add_form',
+  {
+    data =>
+    {
+    },
+    title => 'Create New Link Group',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Link Groups', link => '/admin/manage_links/groups' },
+      { name => 'Create New Link Group', current => 1 },
+    ],
+  };
+};
+
+
+=head2 POST C</admin/manage_links/groups/create>
+
+Route to the save data from the Add Links Group form. Admin required.
+
+=cut
+
+post '/admin/manage_links/groups/create' => require_role Admin => sub
+{
+  my $group_name = body_parameters->get( 'name' )     // undef;
+  my $order_by   = body_parameters->get( 'order_by' ) // 1;
+
+  if ( ! defined $group_name )
+  {
+    flash( error => 'A group name must be provided. New group not saved.' );
+    redirect '/admin/manage_links/groups';
+  }
+
+  my $new_group = $SCHEMA->resultset( 'LinkGroup' )->create(
+    {
+      name     => $group_name,
+      order_by => $order_by,
+    }
+  );
+
+  info( sprintf( 'New Link Group created for &quot;%s&quot;.', $new_group->name ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created Link Group >%s< (ID:%s)', $new_group->name, $new_group->id ),
+  );
+
+  flash( success => sprintf( 'New Link Group <strong>%s</strong> successfully created.', $new_group->name ) );
+  redirect '/admin/manage_links/groups';
+};
+
+
+=head2 GET C</admin/manage_links/groups/:group_id/edit>
+
+Route to the edit link group form. Admin required.
+
+=cut
+
+get '/admin/manage_links/groups/:group_id/edit' => require_role Admin => sub
+{
+  my $group_id = route_parameters->get( 'group_id' );
+
+  my $group = $SCHEMA->resultset( 'LinkGroup' )->find( $group_id );
+
+  if
+  (
+    ! defined $group
+    or
+    ref( $group ) ne 'QP::Schema::Result::LinkGroup'
+  )
+  {
+    flash( error => 'Could not edit Link Group. Invalid or missing group ID.' );
+    redirect '/admin/manage_links/groups';
+  }
+
+
+  template 'admin_manage_links_groups_edit_form',
+  {
+    data =>
+    {
+      group => $group,
+    },
+    title => 'Edit Link Group',
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Link Groups', link => '/admin/manage_links/groups' },
+      { name => 'Edit Link Group', current => 1 },
+    ],
+  };
+};
+
+
+=head2 POST C</admin/manage_links/groups/:group_id/update>
+
+Route to update database info from the edit link group form. Admin required.
+
+=cut
+
+post '/admin/manage_links/groups/:group_id/update' => require_role Admin => sub
+{
+  my $group_id = route_parameters->get( 'group_id' );
+
+  my $group = $SCHEMA->resultset( 'LinkGroup' )->find( $group_id );
+
+  if
+  (
+    not defined $group
+    or
+    ref( $group ) ne 'QP::Schema::Result::LinkGroup'
+  )
+  {
+    warn sprintf( 'Invalid or undefined link group ID: >%s<', $group_id );
+    flash( error => 'Could not edit Link Group. Invalid or missing group ID.' );
+    redirect '/admin/manage_links/groups';
+  }
+
+  my $orig_group = Clone::clone( $group );
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  $group->name( body_parameters->get( 'name' ) );
+  $group->order_by( ( body_parameters->get( 'order_by' ) // 1 ) );
+
+  $group->update;
+
+  flash success => sprintf( 'Link Group &quot;<strong>%s</strong>&quot; has been updated.', $group->name );
+  info sprintf( 'Updated link group >%s< -> >%s<, on %s', $orig_group->name, $group->name, $now );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Updated Link Group %s -&gt; %s ', $orig_group->name, $group->name ),
+  );
+  redirect '/admin/manage_links/groups';
+};
+
+
+=head2 GET C</admin/manage_links/groups/:group_id/delete>
+
+Route for deleting a particular link group. Admin required.
+
+=cut
+
+get '/admin/manage_links/groups/:group_id/delete' => require_role Admin => sub
+{
+  my $group_id = route_parameters->get( 'group_id' );
+
+  my $group = $SCHEMA->resultset( 'LinkGroup' )->find( $group_id );
+
+  if
+  (
+    not defined $group
+    or
+    ref( $group ) ne 'QP::Schema::Result::LinkGroup'
+  )
+  {
+    warn sprintf( 'Invalid or undefined group ID: >%s<', $group_id );
+    flash error => 'Error: Invalid or undefined Link Group ID.';
+    redirect '/admin/manage_links/groups';
+  }
+
+  my $groupname = $group->name;
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  $group->delete;
+
+  info sprintf( 'Deleted link group >%s<, on %s', $groupname, $now );
+  flash success => sprintf( 'Successfully deleted Link Group &quot;<strong>%s</strong>&quot;', $groupname );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Deleted Link Group >%s< (ID:%s)', $groupname, $group_id ),
+  );
+
+  redirect '/admin/manage_links/groups';
+};
+
+
+=head2 GET C</admin/manage_links/links>
+
+Route to Links management dashboard. Requires being logged in and of admin role.
+
+=cut
+
+get '/admin/manage_links/links' => require_role Admin => sub
+{
+  my @links = $SCHEMA->resultset( 'Link' )->search( undef,
+                                                          {
+                                                            order_by =>
+                                                            {
+                                                              -asc =>
+                                                              [
+                                                                'link_group_id',
+                                                                'name',
+                                                              ]
+                                                            },
+                                                          }
+  );
+
+  my @groups = $SCHEMA->resultset( 'LinkGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_links',
+  {
+    data =>
+    {
+      links  => \@links,
+      groups => \@groups,
+    },
+    breadcrumbs =>
+    [
+      { name => 'Admin', link => '/admin' },
+      { name => 'Manage Links', current => 1 },
+    ],
+    title => 'Manage Links',
+  };
+};
+
+
+=head2 GET C</admin/manage_links/links/add>
+
+Route to add new link form. Requires being logged in and of Admin role.
+
+=cut
+
+get '/admin/manage_links/links/add' => require_role Admin => sub
+{
+  my @groups   = $SCHEMA->resultset( 'LinkGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+  template 'admin_manage_links_add_form',
+      {
+        data =>
+        {
+          groups => \@groups,
+        },
+        title => 'Add Link',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_links/links/create>
+
+Route to save new link data to the database.  Requires being logged in and of Admin role.
+
+=cut
+
+post '/admin/manage_links/links/create' => require_role Admin => sub
+{
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+
+  my $new_link = $SCHEMA->resultset( 'Link' )->create(
+    {
+      name          => body_parameters->get( 'name' ),
+      link_group_id => body_parameters->get( 'link_group_id' ),
+      url           => body_parameters->get( 'url' ),
+      show_url      => body_parameters->get( 'show_url' ),
+    }
+  );
+
+  my $fields = body_parameters->as_hashref;
+  my @fields = ();
+  foreach my $key ( sort keys %{ $fields } )
+  {
+    push @fields, sprintf( '%s: %s', $key, $fields->{$key} );
+  }
+
+  info sprintf( 'Created new link >%s<, ID: >%s<, on %s', body_parameters->get( 'name' ), $new_link->id, $now );
+
+  flash success => sprintf( 'Successfully created Link &quot;<strong>%s</strong>&quot;!', body_parameters->get( 'name' ) );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Created new link<br>%s', join( '<br>', @fields ) ),
+  );
+
+  redirect '/admin/manage_links/links';
+};
+
+
+=head2 AJAX C</admin/manage_links/links/:link_id/edit>
+
+Route for presenting the edit link form. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_links/links/:link_id/edit' => require_role Admin => sub
+{
+  my $link_id = route_parameters->get( 'link_id' );
+
+  my $link = $SCHEMA->resultset( 'Link' )->find( $link_id );
+
+  if
+  (
+    ! defined $link
+    or
+    ref( $link ) ne 'QP::Schema::Result::Link'
+  )
+  {
+    info sprintf( 'Invalid or missing link ID: >%s< for Edit Link', $link_id );
+    flash( error => 'Could not edit link: Invalid or missing link ID.' );
+    redirect '/admin/manage_links/link';
+  }
+
+  my @groups   = $SCHEMA->resultset( 'LinkGroup' )->search( undef,
+                                                          {
+                                                            order_by => { -asc => 'name' },
+                                                          }
+  );
+
+  template 'admin_manage_links_edit_form',
+      {
+        data =>
+        {
+          groups => \@groups,
+          link   => $link,
+        },
+        title => 'Edit Link',
+      },
+      {
+        layout => 'ajax-modal'
+      };
+};
+
+
+=head2 POST C</admin/manage_links/links/:link_id/update>
+
+Route to send form data to for updating a link in the DB. Requires user to have Admin role.
+
+=cut
+
+post '/admin/manage_links/links/:link_id/update' => require_role Admin => sub
+{
+  my $link_id = route_parameters->get( 'link_id' );
+
+  my $link      = $SCHEMA->resultset( 'Link' )->find( $link_id );
+  my $orig_link = Clone::clone( $link );
+
+  if
+  (
+    not defined $link
+    or
+    ref( $link ) ne 'QP::Schema::Result::Link'
+  )
+  {
+    flash( error => 'Error: Cannot update link - Invalid or unknown ID.' );
+    redirect '/admin/manage_links/links';
+  }
+
+  my $now = DateTime->now( time_zone => 'America/New_York' )->datetime;
+  $link->link_group_id( body_parameters->get( 'link_group_id' ) );
+  $link->name( body_parameters->get( 'name' ) );
+  $link->url( body_parameters->get( 'url' ) );
+  $link->show_url( body_parameters->get( 'show_url' ) ? body_parameters->get( 'show_url' ) : 0 );
+
+  $link->update();
+
+  info sprintf( 'Link >%s< updated by %s on %s.', $link->name, logged_in_user->username, $now );
+
+  my $old =
+  {
+    link_group_id => $orig_link->link_group_id,
+    name          => $orig_link->name,
+    url           => $orig_link->url,
+    show_url      => $orig_link->show_url,
+  };
+  my $new =
+  {
+    link_group_id => body_parameters->get( 'link_group_id' ),
+    name          => body_parameters->get( 'name' ),
+    url           => body_parameters->get( 'url' ),
+    show_url      => body_parameters->get( 'show_url' ) ? body_parameters->get( 'show_url' ) : 0,
+  };
+
+  my $diffs = QP::Log->find_changes_in_data( old_data => $old, new_data => $new );
+
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Link modified:<br>%s', join( ', ', @{ $diffs } ) ),
+  );
+
+  flash( success => sprintf( 'Successfully updated link &quot;<strong>%s</strong>&quot;.',
+                                body_parameters->get( 'name' ) ) );
+  redirect '/admin/manage_links/links';
+};
+
+
+=head2 GET C</admin/manage_links/links/:link_id/delete>
+
+Route to delete a link. Requires the user be logged in and an Admin.
+
+=cut
+
+get '/admin/manage_links/links/:link_id/delete' => require_role Admin => sub
+{
+  my $link_id = route_parameters->get( 'link_id' );
+
+  my $link = $SCHEMA->resultset( 'Link' )->find( $link_id );
+  my $link_name = $link->name;
+
+  if
+  (
+    not defined $link
+    or
+    ref( $link ) ne 'QP::Schema::Result::Link'
+  )
+  {
+    flash( error => 'Error: Cannot delete link - Invalid or unknown ID.' );
+    redirect '/admin/manage_links/links';
+  }
+
+  $link->delete;
+
+  flash success => sprintf( 'Successfully deleted Link <strong>%s</strong>.', $link_name );
+  my $logged = QP::Log->admin_log
+  (
+    admin       => sprintf( '%s (ID:%s)', logged_in_user->username, logged_in_user->id ),
+    ip_address  => ( request->header('X-Forwarded-For') // 'Unknown' ),
+    log_level   => 'Info',
+    log_message => sprintf( 'Link &quot;%s&quot; deleted', $link_name ),
+  );
+  redirect '/admin/manage_links/links';
 };
 
 

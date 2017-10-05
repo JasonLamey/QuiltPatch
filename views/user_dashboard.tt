@@ -5,7 +5,7 @@
             <div class="row">
               <div class="small-12 medium-6 columns">
                 <div class="callout">
-                  <h5>Upcoming Classes</h5>
+                  <h5>Upcoming Classes In Your Bookmarks</h5>
                   <div class="row column">
                     [% IF data.bookmarks_by_date.defined && data.bookmarks_by_date.size > 0 %]
                       [% bookmark_count = 0 %]

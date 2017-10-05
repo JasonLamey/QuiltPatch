@@ -1,0 +1,45 @@
+<h5>Edit Link</h5>
+
+<form method="post" action="/admin/manage_links/links/[% data.link.id %]/update">
+<div class="row">
+  <div class="small-12 medium-5 columns">
+    <label for="link_group_id">Link Group:
+      <select name="link_group_id">
+        <option value=''>Select Link Group</option>
+        [% FOREACH group IN data.groups %]
+        <option value='[% group.id %]'[% IF group.id == data.link.link_group_id %] selected[% END %]>[% group.name %]</option>
+        [% END %]
+      </select>
+    </label>
+  </div>
+  <div class="small-12 medium-7 columns">
+    <label for="subgroup">Link Name:
+      <input type="text" name="name" value="[% data.link.name %]" placeholder="Link Name">
+    </label>
+  </div>
+</div>
+<div class="row">
+  <div class="small-12 medium-6 columns">
+    <label for="url">Link URL:
+      <input type="url" name="url" placeholder="http://www.hogwarts.edu" value="[% data.link.url %]">
+    </label>
+  </div>
+  <div class="small-12 medium-6 columns">
+    <label for="show_url">Show URL:
+      <div class="switch">
+        <input class="switch-input" id="show_url" type="checkbox" name="show_url" value="1"[% IF data.link.show_url == 1 %] checked[% END %]>
+          <label class="switch-paddle" for="show_url">
+            <span class="show-for-sr">Show the URL?</span>
+            <span class="switch-active" aria-hidden="true">Yes</span>
+            <span class="switch-inactive" aria-hidden="true">No</span>
+          </label>
+      </div>
+    </label>
+  </div>
+</div>
+<div class="row">
+  <div class="small-12 columns">
+    <button class="button" type="submit">Update</button>
+  </div>
+</div>
+</form>

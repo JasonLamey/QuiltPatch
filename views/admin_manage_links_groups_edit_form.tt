@@ -1,0 +1,22 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h4>Edit Link Group</h4>
+
+    <form method="post" action="/admin/manage_links/groups/[% data.group.id %]/update" id="link_group_form" data-abide novalidate>
+
+      <label for="name">Group Name <strong><i class="fa fa-asterisk fa-fw"></i></strong>:
+        <input name="name" placeholder="Links For Master Quilters" value="[% data.group.name %]" type="text" required>
+        <span class="form-error">You must provide a Link Group Name.</span>
+      </label>
+
+      <label for="order_by">Sort Order:
+        <input type="number" name="order_by" placeholder="1" value="[% data.group.order_by %]">
+      </label>
+
+      <button class="button" for="link_group_form" type="submit">Update Group</button>
+
+    </form>
+  </div>
+</div>

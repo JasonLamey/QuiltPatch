@@ -1,0 +1,32 @@
+[% PROCESS 'partials/_breadcrumbs.tt' %]
+
+<div class="row column">
+  <div class="callout">
+    <h3>Manage Links</h3>
+
+    <div class="row column">
+      <a href="/admin/manage_links/links/add" class="button notice" rel="modal:open">Create New Link</a>
+    </div>
+
+    [% FOREACH group IN data.groups %]
+    <h5>[% group.name %]</h5>
+      [% FOREACH link IN data.links %]
+        [% IF link.link_group_id == group.id %]
+    <div class="row">
+      <div class="small-6 medium-4 columns">
+      [% link.name %]
+      </div>
+      <div class="hide-for-small-only medium-6 columns">
+      [% link.url %][% IF link.show_url == 1 %] <i class="fa fa-eye fa-fw"></i>[% END %]
+      </div>
+      <div class="small-6 medium-2 columns">
+        <a href="/admin/manage_links/links/[% link.id %]/edit" class="button tiny notice" rel="modal:open">Edit</a>
+        <button class="button tiny alert" onclick="promptForDelete( '[% link.name %]', '/admin/manage_links/links/[% link.id %]/delete' );">Delete</button>
+      </div>
+    </div>
+        [% END %]
+      [% END %]
+    <br>
+    [% END %]
+  </div>
+</div>
