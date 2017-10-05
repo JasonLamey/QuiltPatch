@@ -790,8 +790,8 @@ get '/reset_my_password/?:code?' => sub
   if ( not defined $code )
   {
     return template '/reset_my_password_form',
-      {
-      };
+    {
+    };
   }
 
   my $username = user_password( code => $code );
