@@ -383,7 +383,7 @@ get '/classes/:group_id' => sub
                                                       {
                                                         prefetch =>
                                                         [
-                                                          'dates', { 'classteachers' => 'teachers' },
+                                                          'dates', 'classteachers',
                                                         ],
                                                         order_by =>
                                                         {
