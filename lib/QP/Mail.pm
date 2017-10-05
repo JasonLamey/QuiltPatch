@@ -150,7 +150,7 @@ sub send_welcome_email
                                                                             email     => $new_user->email,
                                                                            ),
                                     from    => $SYSTEM_FROM,
-                                    subject => 'Thanks For Signing Up with Infinite Monkeys Games!',
+                                    subject => 'Thanks For Signing Up with The Quilt Patch!',
                                     type    => 'html',
   );
 
@@ -229,7 +229,7 @@ sub send_password_reset_email
                                                                             email     => $email,
                                                                            ),
                                     from    => $SYSTEM_FROM,
-                                    subject => 'Your Infinite Monkeys Games Password Reset Request',
+                                    subject => 'Your Quilt Patch Password Reset Request',
                                     type    => 'html',
   );
 
