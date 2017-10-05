@@ -1,0 +1,7 @@
+/var/www/QP/local/lib/perl5/Email/Abstract.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/EmailMIME.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/EmailSimple.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/MIMEEntity.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/MailInternet.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/MailMessage.pm
+/var/www/QP/local/lib/perl5/Email/Abstract/Plugin.pm

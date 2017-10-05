@@ -1,0 +1,6 @@
+/var/www/QP/local/lib/perl5/Email/MIME.pm
+/var/www/QP/local/lib/perl5/Email/MIME/Creator.pm
+/var/www/QP/local/lib/perl5/Email/MIME/Encode.pm
+/var/www/QP/local/lib/perl5/Email/MIME/Header.pm
+/var/www/QP/local/lib/perl5/Email/MIME/Header/AddressList.pm
+/var/www/QP/local/lib/perl5/Email/MIME/Modifier.pm

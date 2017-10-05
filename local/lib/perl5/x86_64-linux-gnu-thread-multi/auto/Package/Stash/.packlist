@@ -1,0 +1,4 @@
+/var/www/QP/local/bin/package-stash-conflicts
+/var/www/QP/local/lib/perl5/Package/Stash.pm
+/var/www/QP/local/lib/perl5/Package/Stash/Conflicts.pm
+/var/www/QP/local/lib/perl5/Package/Stash/PP.pm

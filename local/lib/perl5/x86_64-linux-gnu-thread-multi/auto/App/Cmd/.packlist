@@ -1,0 +1,14 @@
+/var/www/QP/local/lib/perl5/App/Cmd.pm
+/var/www/QP/local/lib/perl5/App/Cmd/ArgProcessor.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Command.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Command/commands.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Command/help.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Command/version.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Plugin.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Setup.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Simple.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Subdispatch.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Subdispatch/DashedStyle.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Tester.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Tester/CaptureExternal.pm
+/var/www/QP/local/lib/perl5/App/Cmd/Tutorial.pod

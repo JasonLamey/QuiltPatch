@@ -24,7 +24,7 @@ Database schema for the QP app, using DBIx::Class.
 
 =cut
 
-const my $DB_NAME => 'dbi:mysql:quiltpatch';
+const my $DB_NAME => 'dbi:mysql:quiltpatch_v2';
 const my $DB_USER => 'quiltpatch';
 const my $DB_PASS => 'st1tchT1me';
 

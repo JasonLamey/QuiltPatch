@@ -1,0 +1,16 @@
+/var/www/QP/local/lib/perl5/Net/Cmd.pm
+/var/www/QP/local/lib/perl5/Net/Config.pm
+/var/www/QP/local/lib/perl5/Net/Domain.pm
+/var/www/QP/local/lib/perl5/Net/FTP.pm
+/var/www/QP/local/lib/perl5/Net/FTP/A.pm
+/var/www/QP/local/lib/perl5/Net/FTP/E.pm
+/var/www/QP/local/lib/perl5/Net/FTP/I.pm
+/var/www/QP/local/lib/perl5/Net/FTP/L.pm
+/var/www/QP/local/lib/perl5/Net/FTP/dataconn.pm
+/var/www/QP/local/lib/perl5/Net/NNTP.pm
+/var/www/QP/local/lib/perl5/Net/Netrc.pm
+/var/www/QP/local/lib/perl5/Net/POP3.pm
+/var/www/QP/local/lib/perl5/Net/SMTP.pm
+/var/www/QP/local/lib/perl5/Net/Time.pm
+/var/www/QP/local/lib/perl5/Net/libnet.cfg
+/var/www/QP/local/lib/perl5/Net/libnetFAQ.pod

@@ -55,7 +55,7 @@ date_format_long: '%A, %d %B, %Y'
 
 dbicx_sugar:
   default:
-    dsn: 'dbi:mysql:database=quiltpatch;host=localhost'
+    dsn: 'dbi:mysql:database=quiltpatch_v2;host=localhost'
     schema_class: 'QP::Schema'
     user: 'quiltpatch'
     password: 'st1tchT1me'
@@ -74,7 +74,7 @@ plugins:
     session_hash_key: '_flash'
   DBIC:
     default:
-      dsn: 'dbi:mysql:database=quiltpatch;host=localhost'
+      dsn: 'dbi:mysql:database=quiltpatch_v2;host=localhost'
       schema_class: 'QP::Schema'
       user: 'quiltpatch'
       password: 'st1tchT1me'

@@ -1,0 +1,79 @@
+{
+   "abstract" : "Support for the SSH 2 protocol via libssh2.",
+   "author" : [
+      "- 2010 by David B. Robins (dbrobins@cpan.org)."
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Module::Install version 1.17, CPAN::Meta::Converter version 2.150010",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : 2
+   },
+   "name" : "Net-SSH2",
+   "no_index" : {
+      "directory" : [
+         "example",
+         "inc",
+         "t"
+      ]
+   },
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "6.59"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "ExtUtils::MakeMaker" : "0"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "perl" : "5.006"
+         }
+      }
+   },
+   "provides" : {
+      "Net::SSH2" : {
+         "file" : "lib/Net/SSH2.pm",
+         "version" : "0.66"
+      },
+      "Net::SSH2::Channel" : {
+         "file" : "lib/Net/SSH2/Channel.pm"
+      },
+      "Net::SSH2::Dir" : {
+         "file" : "lib/Net/SSH2/Dir.pm"
+      },
+      "Net::SSH2::File" : {
+         "file" : "lib/Net/SSH2/File.pm"
+      },
+      "Net::SSH2::KnownHosts" : {
+         "file" : "lib/Net/SSH2/KnownHosts.pm"
+      },
+      "Net::SSH2::Listener" : {
+         "file" : "lib/Net/SSH2/Listener.pm"
+      },
+      "Net::SSH2::PublicKey" : {
+         "file" : "lib/Net/SSH2/PublicKey.pm"
+      },
+      "Net::SSH2::SFTP" : {
+         "file" : "lib/Net/SSH2/SFTP.pm"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ],
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/rkitover/net-ssh2.git"
+      }
+   },
+   "version" : "0.66",
+   "x_serialization_backend" : "JSON::PP version 2.94"
+}

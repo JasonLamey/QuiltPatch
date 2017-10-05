@@ -1,0 +1,4 @@
+/var/www/QP/local/lib/perl5/Stream/Buffered.pm
+/var/www/QP/local/lib/perl5/Stream/Buffered/Auto.pm
+/var/www/QP/local/lib/perl5/Stream/Buffered/File.pm
+/var/www/QP/local/lib/perl5/Stream/Buffered/PerlIO.pm
