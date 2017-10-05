@@ -807,13 +807,13 @@ get '/reset_my_password/?:code?' => sub
 
   user_password( code => $code, new_password => $new_temp_pw );
 
-  forward '/login',
-    {
-      username   => $username,
-      password   => $new_temp_pw,
-      return_url => '/user/change_password/' . $new_temp_pw,
-    },
-    { method => 'POST' };
+  authenticate_user
+  (
+    $username, $new_temp_pw,
+  );
+
+  flash( success => sprintf( 'Welcome back, %s!', $username ) ) );
+  redirect sprintf( '/user/change_password/%s', $new_temp_pw );
 };
 
 
