@@ -1,11 +1,11 @@
 <p>Greetings [% username %]!</p>
 
-<p>Thank you for registering with <strong>Infinite Monkeys Games</strong>! Your next step is to activate your account. To do that, please go to the following link:</p>
+<p>Thank you for registering with <strong>Quilt Patch</strong>! Your next step is to activate your account. To do that, please go to the following link:</p>
 
-<p>[% request.uri_base %]/account_confirmation/[% ccode %]</p>
+<p>[% domain_root %]/account_confirmation/[% ccode %]</p>
 
 <p>Follow the above link to confirm your account with us, and you will be able to log in and use your account.</p>
 
 <p>Thank you for signing up!</p>
 
-<p>-- The Chief Monkey</p>
+<p>-- The Quilt Patch</p>

@@ -15,7 +15,7 @@ use Const::Fast;
 
 const my $SCHEMA       => QP::Schema->db_connect();
 const my $SYSTEM_FROM  => 'Quilt Patch <noreply@quiltpatchva.com>';
-const my %EMAIL_CONFIG => ( driver => 'mail', path => '/usr/bin/mail' );
+const my %EMAIL_CONFIG => ( driver => 'sendmail', path => '/usr/sbin/sendmail' );
 
 
 =head1 NAME
