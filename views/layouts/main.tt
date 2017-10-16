@@ -7,7 +7,7 @@
     <title>
       [% IF title %][% title %] | [% END %]The Quilt Patch
     </title>
-    <link rel="stylesheet" type="text/css" href="/js/vendor/jqueryui/jquery-ui.theme.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/jquery-ui.theme.min.css">
     <link rel="stylesheet" type="text/css" href="/css/app.css">
     <link rel="stylesheet" type="text/css" href="/css/jquery.modal.min.css">
     <link rel="stylesheet" type="text/css" href="/css/notifIt.css">
